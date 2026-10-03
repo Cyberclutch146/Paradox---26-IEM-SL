@@ -7,7 +7,7 @@ import type { OrchestratorRequest, OrchestratorResponse, OrchestratorResult } fr
  * - A ```json code block with JSON inside
  * - Markdown with an embedded ```json block
  */
-function parseRawResult(raw: string): Partial<OrchestratorResult> | null {
+function parseRawResult(raw: string): any | null {
   if (!raw || typeof raw !== "string") return null;
   const trimmed = raw.trim();
 
@@ -163,18 +163,28 @@ export async function POST(request: NextRequest) {
     const rawResult = data.result || data;
 
     // Parse the rich `raw` field that the ML server returns
-    let parsed: Partial<OrchestratorResult> = {};
+    let parsed: any = {};
     if (typeof rawResult.raw === "string") {
       parsed = parseRawResult(rawResult.raw) ?? {};
     }
 
-    // Merge: prefer parsed data from `raw`, fall back to top-level fields
+    // Translate the server's new schema (level, reasoning, actions) to frontend schema
+    const riskLevel = parsed.level ?? parsed.risk_level ?? rawResult.risk_level ?? "moderate";
+    
+    // Assign a default score if none is provided, based on the level
+    const defaultScore = 
+      riskLevel === "danger" ? 0.85 :
+      riskLevel === "warning" ? 0.65 :
+      riskLevel === "watch" ? 0.35 :
+      riskLevel === "low" ? 0.15 :
+      riskLevel === "safe" ? 0.05 : 0.45;
+
     const result: OrchestratorResult = {
-      risk_level: parsed.risk_level ?? rawResult.risk_level ?? "moderate",
-      risk_score: parsed.risk_score ?? rawResult.risk_score ?? 0.45,
-      rationale: parsed.rationale ?? rawResult.rationale ?? "",
+      risk_level: riskLevel,
+      risk_score: parsed.score ?? parsed.risk_score ?? rawResult.risk_score ?? defaultScore,
+      rationale: parsed.reasoning ?? parsed.rationale ?? rawResult.rationale ?? "",
       confidence: parsed.confidence ?? rawResult.confidence,
-      recommended_actions: parsed.recommended_actions ?? rawResult.recommended_actions,
+      recommended_actions: parsed.actions ?? parsed.recommended_actions ?? rawResult.recommended_actions,
       evidence: parsed.evidence ?? rawResult.evidence,
       limitations: parsed.limitations ?? rawResult.limitations,
     };
