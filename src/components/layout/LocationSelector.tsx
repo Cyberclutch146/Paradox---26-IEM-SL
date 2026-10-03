@@ -11,6 +11,9 @@ export default function LocationSelector({ compact = false }: { compact?: boolea
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const [globalResults, setGlobalResults] = useState<Region[]>([]);
+  const [isSearchingGlobal, setIsSearchingGlobal] = useState(false);
+
   const { region: selected, setRegion } = useRegion();
   const router = useRouter();
   const pathname = usePathname();
@@ -21,7 +24,36 @@ export default function LocationSelector({ compact = false }: { compact?: boolea
   const groups = groupRegions();
   const allRegions = useMemo(() => groups.flatMap((g) => g.regions), [groups]);
 
-  const filteredRegions = useMemo(() => {
+  // Debounced global search
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setGlobalResults([]);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      setIsSearchingGlobal(true);
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=5`);
+        const data = await res.json();
+        const results = data.map((d: any) => ({
+          id: `global_${d.place_id}`,
+          name: d.display_name.split(",")[0],
+          subLabel: d.display_name,
+          type: "state",
+          center: { lat: parseFloat(d.lat), lng: parseFloat(d.lon) },
+          zoom: 11
+        }));
+        setGlobalResults(results);
+      } catch (e) {
+        console.error("Global search failed", e);
+      } finally {
+        setIsSearchingGlobal(false);
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const filteredLocal = useMemo(() => {
     if (!searchQuery.trim()) return null;
     const query = searchQuery.toLowerCase();
     return allRegions.filter(
@@ -30,7 +62,7 @@ export default function LocationSelector({ compact = false }: { compact?: boolea
   }, [searchQuery, allRegions]);
 
   const isSearching = searchQuery.trim().length > 0;
-  const displayRegions = isSearching ? filteredRegions : null;
+  const displayRegions = isSearching ? [...(filteredLocal || []), ...globalResults] : null;
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -51,14 +83,12 @@ export default function LocationSelector({ compact = false }: { compact?: boolea
     }
   }, [isOpen]);
 
-  function selectLocation(id: string) {
-    const next = allRegions.find((r) => r.id === id);
-    if (!next) return;
-    setRegion(next);
+  function selectLocation(loc: Region) {
+    setRegion(loc);
     setIsOpen(false);
     setSearchQuery("");
     setHighlightedIndex(-1);
-    router.replace(`${pathname}?region=${next.id}`, { scroll: false });
+    router.replace(`${pathname}?region=${loc.id}&name=${encodeURIComponent(loc.name)}&lat=${loc.center.lat}&lng=${loc.center.lng}`, { scroll: false });
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
@@ -77,31 +107,8 @@ export default function LocationSelector({ compact = false }: { compact?: boolea
       case "Enter":
         if (highlightedIndex >= 0 && highlightedIndex < regions.length) {
           e.preventDefault();
-          selectLocation(regions[highlightedIndex].id);
+          selectLocation(regions[highlightedIndex]);
         }
-        break;
-      case "Escape":
-        setIsOpen(false);
-        setSearchQuery("");
-        setHighlightedIndex(-1);
-        break;
-      case "Home":
-        e.preventDefault();
-        setHighlightedIndex(0);
-        break;
-      case "End":
-        e.preventDefault();
-        setHighlightedIndex(regions.length - 1);
-        break;
-    }
-  }
-
-  function handleOptionKeyDown(e: React.KeyboardEvent<HTMLButtonElement>, index: number, region: Region) {
-    switch (e.key) {
-      case "Enter":
-      case " ":
-        e.preventDefault();
-        selectLocation(region.id);
         break;
       case "Escape":
         setIsOpen(false);
@@ -123,7 +130,6 @@ export default function LocationSelector({ compact = false }: { compact?: boolea
         )}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
-        aria-label={`Select location, current: ${selected.name}`}
       >
         <svg
           aria-hidden="true"
@@ -154,110 +160,50 @@ export default function LocationSelector({ compact = false }: { compact?: boolea
             </svg>
           </>
         )}
-        {compact && (
-          <span className="absolute left-[calc(100%+8px)] px-2.5 py-1.5 rounded-md bg-text-primary text-bg-primary text-[11px] font-medium tracking-wide whitespace-nowrap opacity-0 md:group-hover:opacity-100 pointer-events-none transition-all duration-200 shadow-md z-50 translate-x-1 group-hover:translate-x-0">
-            {selected.name}
-          </span>
-        )}
       </button>
 
       {isOpen && (
         <div
           className={cn(
-            "absolute mt-2 w-72 max-h-[70vh] overflow-y-auto rounded-xl border border-border-subtle bg-bg-elevated shadow-pop animate-fade-in z-50",
+            "absolute mt-2 w-72 max-h-[70vh] overflow-y-auto rounded-xl border border-border-subtle bg-bg-elevated shadow-pop animate-fade-in z-[9999]",
             compact ? "left-[calc(100%+12px)] bottom-0 mb-0 origin-bottom-left" : "right-0 top-full"
           )}
           role="listbox"
-          aria-label="Location options"
         >
           <div className="p-2 border-b border-border-subtle">
-            <label htmlFor="location-search" className="sr-only">
-              Search regions
-            </label>
             <input
               ref={searchInputRef}
-              id="location-search"
               type="search"
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
                 setHighlightedIndex(-1);
               }}
-              onKeyDown={(e) => {
-                if (e.key === "Escape") {
-                  e.stopPropagation();
-                  setIsOpen(false);
-                  setSearchQuery("");
-                  setHighlightedIndex(-1);
-                }
-              }}
-              placeholder="Search regions..."
-              className="w-full rounded-lg border border-border-subtle bg-bg-surface px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent"
+              placeholder="Search worldwide..."
+              className="w-full rounded-lg border border-border-subtle bg-bg-surface px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent"
               autoComplete="off"
             />
           </div>
           <div className="p-2">
             {isSearching ? (
-              displayRegions?.length === 0 ? (
+              displayRegions?.length === 0 && !isSearchingGlobal ? (
                 <p className="px-3 py-4 text-sm text-text-tertiary text-center">
-                  No regions match {`"${searchQuery}"`}
+                  No regions found.
                 </p>
               ) : (
                 displayRegions!.map((loc, index) => (
                   <button
                     key={loc.id}
-                    ref={(el) => {
-                      optionRefs.current[index] = el;
-                    }}
-                    role="option"
-                    aria-selected={selected.id === loc.id}
-                    aria-setsize={displayRegions!.length}
-                    aria-posinset={index + 1}
-                    onClick={() => selectLocation(loc.id)}
-                    onKeyDown={(e) => handleOptionKeyDown(e, index, loc)}
+                    onClick={() => selectLocation(loc)}
                     className={cn(
                       "w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors",
-                      selected.id === loc.id
-                        ? "bg-accent-subtle text-accent"
-                        : "text-text-primary hover:bg-bg-surface-hover",
                       highlightedIndex === index && "bg-bg-surface-hover outline-none ring-2 ring-accent/40"
                     )}
                   >
-                    <svg
-                      aria-hidden="true"
-                      className={cn("h-4 w-4 shrink-0", selected.id === loc.id ? "text-accent" : "text-text-tertiary")}
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"
-                      />
-                    </svg>
                     <div>
                       <div className="text-sm font-medium">{loc.name}</div>
-                      <div className="text-xs text-text-tertiary">{loc.subLabel}</div>
+                      <div className="text-xs text-text-tertiary truncate max-w-[200px]">{loc.subLabel}</div>
                     </div>
-                    {selected.id === loc.id && (
-                      <svg
-                        aria-hidden="true"
-                        className="ml-auto h-4 w-4 text-accent"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={2}
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                      </svg>
-                    )}
                   </button>
                 ))
               )
@@ -268,55 +214,12 @@ export default function LocationSelector({ compact = false }: { compact?: boolea
                   {group.regions.map((loc, regionIndex) => (
                     <button
                       key={loc.id}
-                      ref={(el) => {
-                        optionRefs.current[regionIndex] = el;
-                      }}
-                      role="option"
-                      aria-selected={selected.id === loc.id}
-                      onClick={() => selectLocation(loc.id)}
-                      onKeyDown={(e) => handleOptionKeyDown(e, regionIndex, loc)}
-                      className={cn(
-                        "w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors",
-                        selected.id === loc.id
-                          ? "bg-accent-subtle text-accent"
-                          : "text-text-primary hover:bg-bg-surface-hover"
-                      )}
+                      onClick={() => selectLocation(loc)}
+                      className="w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-left hover:bg-bg-surface-hover"
                     >
-                      <svg
-                        aria-hidden="true"
-                        className={cn("h-4 w-4 shrink-0", selected.id === loc.id ? "text-accent" : "text-text-tertiary")}
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={2}
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"
-                        />
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"
-                        />
-                      </svg>
                       <div>
                         <div className="text-sm font-medium">{loc.name}</div>
-                        <div className="text-xs text-text-tertiary">{loc.subLabel}</div>
                       </div>
-                      {selected.id === loc.id && (
-                        <svg
-                          aria-hidden="true"
-                          className="ml-auto h-4 w-4 text-accent"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth={2}
-                        >
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                        </svg>
-                      )}
                     </button>
                   ))}
                 </div>

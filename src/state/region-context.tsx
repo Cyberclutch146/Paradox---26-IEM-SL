@@ -19,19 +19,23 @@ const RegionContext = createContext<RegionContextValue | null>(null);
 
 export function RegionProvider({
   defaultRegionId,
+  customRegion,
   children,
 }: {
   defaultRegionId?: string;
+  customRegion?: Region;
   children: ReactNode;
 }) {
   const [region, setRegion] = useState<Region>(
-    () => findRegion(defaultRegionId) ?? getDefaultRegion()
+    () => customRegion ?? findRegion(defaultRegionId) ?? getDefaultRegion()
   );
   const [prevDefaultRegionId, setPrevDefaultRegionId] = useState(defaultRegionId);
+  const [prevCustomRegionName, setPrevCustomRegionName] = useState(customRegion?.name);
 
-  if (prevDefaultRegionId !== defaultRegionId) {
+  if (prevDefaultRegionId !== defaultRegionId || prevCustomRegionName !== customRegion?.name) {
     setPrevDefaultRegionId(defaultRegionId);
-    setRegion(findRegion(defaultRegionId) ?? getDefaultRegion());
+    setPrevCustomRegionName(customRegion?.name);
+    setRegion(customRegion ?? findRegion(defaultRegionId) ?? getDefaultRegion());
   }
 
   const value = useMemo(() => ({ region, setRegion }), [region]);

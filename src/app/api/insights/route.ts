@@ -1,10 +1,13 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import db from "@/lib/db";
 
 import { getMockInsights } from "@/lib/mock-store";
 
-export function GET() {
-  if (!db) return NextResponse.json(getMockInsights());
+export function GET(request: NextRequest) {
+  const url = new URL(request.url);
+  const regionId = url.searchParams.get("region") || undefined;
+
+  if (!db) return NextResponse.json(getMockInsights(regionId));
   const rows = db.prepare("SELECT * FROM insights").all() as any[];
   const insights = rows.map((r) => ({
     id: r.id,
