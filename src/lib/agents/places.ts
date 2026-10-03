@@ -63,6 +63,7 @@ export function resolvePlaces(text: string): PlaceMatch {
   const haystack = normalise(text);
   const hits: { id: string; at: number }[] = [];
 
+  // Check aliases first (towns, districts, landmarks)
   for (const [regionId, terms] of Object.entries(ALIASES)) {
     let first = -1;
     for (const term of terms) {
@@ -73,15 +74,52 @@ export function resolvePlaces(text: string): PlaceMatch {
     if (first !== -1) hits.push({ id: regionId, at: first });
   }
 
-  const outOfScope = OUT_OF_SCOPE.filter((term) => containsTerm(haystack, term)).map(
-    (term) => term.charAt(0).toUpperCase() + term.slice(1)
-  );
+  // Also check all defined regions
+  for (const region of REGIONS) {
+    if (hits.some((h) => h.id === region.id)) continue;
+    const rId = region.id.toLowerCase();
+    const rName = region.name.toLowerCase();
+    let at = -1;
+    if (containsTerm(haystack, rId)) {
+      at = haystack.indexOf(` ${rId}`);
+    } else if (haystack.includes(` ${rName} `)) {
+      at = haystack.indexOf(` ${rName} `);
+    }
+    if (at !== -1) {
+      hits.push({ id: region.id, at });
+    }
+  }
+
+  const outOfScope = OUT_OF_SCOPE.filter(
+    (term) => containsTerm(haystack, term) && !REGIONS.some((r) => r.id === term)
+  ).map((term) => term.charAt(0).toUpperCase() + term.slice(1));
 
   return {
     regionIds: hits.sort((a, b) => a.at - b.at).map((hit) => hit.id),
     outOfScope,
     allStates: ALL_STATES.some((phrase) => haystack.includes(` ${phrase}`)),
   };
+}
+
+export function detectSpecificPlace(text: string): { id?: string; name: string } | null {
+  const match = resolvePlaces(text);
+  if (match.allStates) return null;
+
+  if (match.regionIds.length > 0) {
+    const regionId = match.regionIds[0];
+    const reg = REGIONS.find((r) => r.id === regionId);
+    return { id: regionId, name: reg?.name ?? regionName(regionId) };
+  }
+
+  if (match.outOfScope.length > 0) {
+    const name = match.outOfScope[0];
+    const reg = REGIONS.find(
+      (r) => r.name.toLowerCase() === name.toLowerCase() || r.id.toLowerCase() === name.toLowerCase()
+    );
+    return { id: reg?.id, name: reg?.name ?? name };
+  }
+
+  return null;
 }
 
 export function allRegionIds(): string[] {
@@ -95,3 +133,4 @@ export function regionName(regionId: string): string {
 export function isCoveredRegion(regionId: string): boolean {
   return REGIONS.some((region) => region.id === regionId);
 }
+

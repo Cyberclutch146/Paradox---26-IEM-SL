@@ -105,3 +105,43 @@ export interface ZoneReport {
   riskScore: number;
   description: string;
 }
+
+export interface OrchestratorLocation {
+  latitude: number;
+  longitude: number;
+}
+
+export interface OrchestratorWeather {
+  rain_today_mm: number;
+  rain_72h_incl_today_mm: number;
+  doy_sin?: number;
+  doy_cos?: number;
+  rain_ante_7d_mm?: number;
+  rain_ante_30d_mm?: number;
+}
+
+export interface OrchestratorSoil {
+  sm_0_7cm_ante: number;
+  sm_0_7cm_change_3d: number;
+}
+
+export interface OrchestratorRequest {
+  location: OrchestratorLocation;
+  weather: OrchestratorWeather;
+  soil: OrchestratorSoil;
+  regionId?: string;
+}
+
+export interface OrchestratorResult {
+  risk_level: string;
+  risk_score: number;
+  rationale: string;
+}
+
+export interface OrchestratorResponse {
+  success: boolean;
+  isFallback?: boolean;
+  fallbackReason?: string;
+  result: OrchestratorResult;
+  timestamp: string;
+}
