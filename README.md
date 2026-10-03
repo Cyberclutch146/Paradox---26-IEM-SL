@@ -374,6 +374,7 @@ The `docs/` directory contains detailed guides:
 | [docs/realtime.md](docs/realtime.md) | Firebase auth, Firestore chat, security rules, extending the realtime path |
 | [docs/risk-scoring.md](docs/risk-scoring.md) | Scoring engine, factors, thresholds, calibration |
 | [docs/components.md](docs/components.md) | Auto-generated API reference for all exported components |
+| [docs/api-routing.md](docs/api-routing.md) | Beginner-friendly guide to Next.js API routes, serverless handlers, and ML bridge |
 | [docs/contributing.md](docs/contributing.md) | How to work in this repo — code style, commit conventions, PR process |
 
 ---
