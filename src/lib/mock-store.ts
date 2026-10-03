@@ -69,7 +69,7 @@ export function getMockInsights(regionId?: string): InsightData[] {
       trend: isUp ? "up" : "down",
       trendValue: (isUp ? "+" : "-") + (baseValue * Math.abs(variance)).toFixed(1) + (insight.unit === "zones" ? " zones" : insight.unit),
       sparklineData: newSparkline,
-      status: newValue > (insight.threshold || baseValue * 1.1) ? "danger" : newValue > (insight.threshold ? insight.threshold * 0.85 : baseValue * 0.9) ? "warning" : "stable",
+      status: newValue > (insight.threshold || baseValue * 1.1) ? "danger" : newValue > (insight.threshold ? insight.threshold * 0.85 : baseValue * 0.9) ? "warning" : "normal",
     };
   });
 }

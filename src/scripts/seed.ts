@@ -3,6 +3,11 @@ import { getMockRegions, getMockRiskZones, getMockAlerts, getMockInsights, getMo
 
 console.log("Seeding database...");
 
+if (!db) {
+  console.error("SQLite database is not available on this platform. Aborting seed.");
+  process.exit(0);
+}
+
 // Create tables
 db.exec(`
   CREATE TABLE IF NOT EXISTS regions (
