@@ -11,58 +11,21 @@ export default function LocationSelector({ compact = false }: { compact?: boolea
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
-  const [globalResults, setGlobalResults] = useState<Region[]>([]);
-  const [isSearchingGlobal, setIsSearchingGlobal] = useState(false);
 
   const { region: selected, setRegion } = useRegion();
   const router = useRouter();
   const pathname = usePathname();
   const dropdownRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const optionRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   const groups = groupRegions();
   const allRegions = useMemo(() => groups.flatMap((g) => g.regions), [groups]);
 
-  // Debounced global search
-  useEffect(() => {
-    if (!searchQuery.trim()) {
-      setGlobalResults([]);
-      return;
-    }
-    const timer = setTimeout(async () => {
-      setIsSearchingGlobal(true);
-      try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=5`);
-        const data = await res.json();
-        const results = data.map((d: any) => ({
-          id: `global_${d.place_id}`,
-          name: d.display_name.split(",")[0],
-          subLabel: d.display_name,
-          type: "state",
-          center: { lat: parseFloat(d.lat), lng: parseFloat(d.lon) },
-          zoom: 11
-        }));
-        setGlobalResults(results);
-      } catch (e) {
-        console.error("Global search failed", e);
-      } finally {
-        setIsSearchingGlobal(false);
-      }
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
-
-  const filteredLocal = useMemo(() => {
-    if (!searchQuery.trim()) return null;
-    const query = searchQuery.toLowerCase();
-    return allRegions.filter(
-      (r) => r.name.toLowerCase().includes(query) || r.subLabel.toLowerCase().includes(query)
-    );
+  const filteredRegions = useMemo(() => {
+    if (!searchQuery.trim()) return allRegions;
+    const q = searchQuery.toLowerCase();
+    return allRegions.filter((r) => r.name.toLowerCase().includes(q));
   }, [searchQuery, allRegions]);
-
-  const isSearching = searchQuery.trim().length > 0;
-  const displayRegions = isSearching ? [...(filteredLocal || []), ...globalResults] : null;
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -92,22 +55,21 @@ export default function LocationSelector({ compact = false }: { compact?: boolea
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
-    const regions = displayRegions ?? allRegions;
-    if (!regions.length) return;
+    if (!filteredRegions.length) return;
 
     switch (e.key) {
       case "ArrowDown":
         e.preventDefault();
-        setHighlightedIndex((prev) => (prev + 1) % regions.length);
+        setHighlightedIndex((prev) => (prev + 1) % filteredRegions.length);
         break;
       case "ArrowUp":
         e.preventDefault();
-        setHighlightedIndex((prev) => (prev - 1 + regions.length) % regions.length);
+        setHighlightedIndex((prev) => (prev - 1 + filteredRegions.length) % filteredRegions.length);
         break;
       case "Enter":
-        if (highlightedIndex >= 0 && highlightedIndex < regions.length) {
+        if (highlightedIndex >= 0 && highlightedIndex < filteredRegions.length) {
           e.preventDefault();
-          selectLocation(regions[highlightedIndex]);
+          selectLocation(filteredRegions[highlightedIndex]);
         }
         break;
       case "Escape":
@@ -117,6 +79,8 @@ export default function LocationSelector({ compact = false }: { compact?: boolea
         break;
     }
   }
+
+  const displayLabel = selected ? selected.name : "Select Region";
 
   return (
     <div className="relative" ref={dropdownRef} onKeyDown={handleKeyDown}>
@@ -147,7 +111,9 @@ export default function LocationSelector({ compact = false }: { compact?: boolea
         </svg>
         {!compact && (
           <>
-            <span className="max-w-[120px] truncate">{selected.name}</span>
+            <span className={cn("max-w-[140px] truncate", !selected && "text-text-tertiary italic")}>
+              {displayLabel}
+            </span>
             <svg
               aria-hidden="true"
               className={`h-3.5 w-3.5 text-text-tertiary transition-transform ${isOpen ? "rotate-180" : ""}`}
@@ -165,12 +131,13 @@ export default function LocationSelector({ compact = false }: { compact?: boolea
       {isOpen && (
         <div
           className={cn(
-            "absolute mt-2 w-72 max-h-[70vh] overflow-y-auto rounded-xl border border-border-subtle bg-bg-elevated shadow-pop animate-fade-in z-[9999]",
+            "absolute mt-2 w-64 max-h-[70vh] overflow-y-auto rounded-xl border border-border-subtle bg-bg-elevated shadow-pop animate-fade-in z-[9999]",
             compact ? "left-[calc(100%+12px)] bottom-0 mb-0 origin-bottom-left" : "right-0 top-full"
           )}
           role="listbox"
         >
           <div className="p-2 border-b border-border-subtle">
+            <p className="eyebrow eyebrow-xs px-2 py-1 text-accent">Northeast India · Prediction Zones</p>
             <input
               ref={searchInputRef}
               type="search"
@@ -179,50 +146,36 @@ export default function LocationSelector({ compact = false }: { compact?: boolea
                 setSearchQuery(e.target.value);
                 setHighlightedIndex(-1);
               }}
-              placeholder="Search worldwide..."
-              className="w-full rounded-lg border border-border-subtle bg-bg-surface px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent"
+              placeholder="Filter states..."
+              className="mt-1 w-full rounded-lg border border-border-subtle bg-bg-surface px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent"
               autoComplete="off"
             />
           </div>
           <div className="p-2">
-            {isSearching ? (
-              displayRegions?.length === 0 && !isSearchingGlobal ? (
-                <p className="px-3 py-4 text-sm text-text-tertiary text-center">
-                  No regions found.
-                </p>
-              ) : (
-                displayRegions!.map((loc, index) => (
-                  <button
-                    key={loc.id}
-                    onClick={() => selectLocation(loc)}
-                    className={cn(
-                      "w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors",
-                      highlightedIndex === index && "bg-bg-surface-hover outline-none ring-2 ring-accent/40"
-                    )}
-                  >
-                    <div>
-                      <div className="text-sm font-medium">{loc.name}</div>
-                      <div className="text-xs text-text-tertiary truncate max-w-[200px]">{loc.subLabel}</div>
-                    </div>
-                  </button>
-                ))
-              )
+            {filteredRegions.length === 0 ? (
+              <p className="px-3 py-4 text-sm text-text-tertiary text-center">No states found.</p>
             ) : (
-              groups.map((group) => (
-                <div key={group.label}>
-                  <div className="eyebrow px-3 pt-2.5 pb-1.5">{group.label}</div>
-                  {group.regions.map((loc, regionIndex) => (
-                    <button
-                      key={loc.id}
-                      onClick={() => selectLocation(loc)}
-                      className="w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-left hover:bg-bg-surface-hover"
-                    >
-                      <div>
-                        <div className="text-sm font-medium">{loc.name}</div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
+              filteredRegions.map((loc, index) => (
+                <button
+                  key={loc.id}
+                  onClick={() => selectLocation(loc)}
+                  className={cn(
+                    "w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors",
+                    selected?.id === loc.id
+                      ? "bg-accent/10 text-accent"
+                      : "hover:bg-bg-surface-hover text-text-primary",
+                    highlightedIndex === index && "bg-bg-surface-hover outline-none ring-2 ring-accent/40"
+                  )}
+                >
+                  <div>
+                    <div className="text-sm font-medium">{loc.name}</div>
+                  </div>
+                  {selected?.id === loc.id && (
+                    <svg className="w-3.5 h-3.5 ml-auto text-accent shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                    </svg>
+                  )}
+                </button>
               ))
             )}
           </div>

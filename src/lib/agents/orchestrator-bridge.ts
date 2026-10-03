@@ -10,7 +10,7 @@
  * 5. If Gemini is unavailable or errors, the Orchestrator's findings are displayed directly.
  */
 
-import { REGIONS, findRegion, getDefaultRegion } from "@/data/regions";
+import { REGIONS, findRegion } from "@/data/regions";
 import { runOrchestrator } from "./orchestrator";
 import { suggestFollowUps } from "./composer";
 import { detectSpecificPlace } from "./places";
@@ -57,7 +57,7 @@ export async function callRemoteOrchestrator(
         (r) =>
           lowerQuery.includes(r.id.toLowerCase()) ||
           lowerQuery.includes(r.name.toLowerCase())
-      ) || getDefaultRegion();
+      ) || REGIONS[0];
   }
 
   // Calibrated study area coordinates known to the GIS/ML models
@@ -290,34 +290,6 @@ export function formatServerModelResponse(orchData: RemoteOrchestratorData): str
  * Coordinates chat fulfillment: queries the remote Orchestrator as the primary authority,
  * then uses Gemini (if available) strictly as a secondary presenter.
  */
-/**
- * Determines whether a user question is relevant to the disaster intelligence,
- * meteorological, geotechnical, or operational hazard domain.
- */
-function isRelevantDisasterQuery(query: string): boolean {
-  const q = query.toLowerCase();
-
-  const domainPatterns = [
-    /\b(landslides?|landslips?|mudslides?|rockfalls?|floods?|flooding|inundat\w*|hazard\w*|disaster\w*|calamity|earthquake\w*|storms?|cyclones?|monsoon\w*|erosi\w*)\b/,
-    /\b(rain\w*|precipitat\w*|weather|forecast|downpour|cloudburst|\d+\s*mm|telemetr\w*|sensor\w*|river\w*|water level\w*)\b/,
-    /\b(soil\w*|moisture|saturat\w*|pore\s*pressure|shear|slope\w*|incline\w*|elevat\w*|relief|dem|terrain|gis|parcel\w*|geolog\w*)\b/,
-    /\b(risk\w*|score|tier|danger\w*|warn\w*|threat\w*|safe\w*|safety|evacuat\w*|alert\w*|advisor\w*|sms|broadcast|rescue|relief|shelter|casualt\w*|damage\w*|expos\w*|village\w*|roads?|highway\w*|bridge\w*|infrastructure|communit\w*|reports?|ground\s*truth)\b/,
-    /\b(what\s+if|how\s+does|how\s+is|calculat\w*|comput\w*|predict\w*|scenario|increas\w*|decreas\w*|surge|shift|delta|factor\s*of\s*safety|orchestrator|model)\b/,
-    /\b(status|situation|briefing|condition|action\w*|recommend\w*|help|who are you|what can you do|capabilities)\b/,
-  ];
-
-  if (domainPatterns.some((pattern) => pattern.test(q))) {
-    return true;
-  }
-
-  // If a specific region, landmark, or monitored place is mentioned, it is relevant
-  if (detectSpecificPlace(query)) {
-    return true;
-  }
-
-  return false;
-}
-
 export async function answerWithOrchestrator(
   turns: ChatTurn[],
   dashboardRegionId: string | undefined,
@@ -325,55 +297,11 @@ export async function answerWithOrchestrator(
 ): Promise<ChatReply> {
   const latestTurn = turns[turns.length - 1];
   const userQuery = latestTurn?.text || "What is the current risk status?";
-  const trimmed = userQuery.trim();
 
   const activeRegionId = dashboardRegionId || "arunachal";
-  const activeRegion = findRegion(activeRegionId) || getDefaultRegion();
+  const activeRegion = findRegion(activeRegionId) || REGIONS[0];
 
-  // Guardrail 1: Greetings & Smalltalk Check
-  const isGreeting = /^(hi|hello|hey|greetings|namaste|good\s+(morning|afternoon|evening|day)|thanks|thank\s+you)\b/i.test(trimmed);
-  if (isGreeting) {
-    return {
-      reply: `Hello! I am **DistraAI**, an operational disaster-intelligence assistant.\n\nI monitor real-time landslide and flood hazards, calculate geotechnical risk shifts, and provide operational advisories across monitored regions.\n\n**Currently Monitored Region**: **${activeRegion.name}**\n\nHow can I assist your hazard monitoring operations today?`,
-      steps: [
-        {
-          agent: "orchestrator",
-          label: "Operational Scope",
-          detail: "Acknowledged greeting and presented disaster intelligence capabilities.",
-        },
-      ],
-      focusRegionId: activeRegion.id,
-      suggestions: [
-        `What is the risk in ${activeRegion.name}?`,
-        `If rainfall increases by 50 mm, how does the risk change?`,
-        `Show alerts for ${activeRegion.name}`,
-      ],
-      mode: "local",
-    };
-  }
-
-  // Guardrail 2: Irrelevant / Out-of-Domain Question Check
-  if (!isRelevantDisasterQuery(userQuery)) {
-    return {
-      reply: `I am **DistraAI**, an operational disaster-intelligence assistant focused exclusively on hazard monitoring, landslide and flood risk assessments, geotechnical simulations, and emergency advisories.\n\nYour question appears to be outside my operational domain. I do not answer queries unrelated to disaster management, weather telemetry, or regional hazard risks.\n\n**You can ask me:**\n- *"What is the current risk level in ${activeRegion.name}?"*\n- *"If the rainfall increases by 50 mm, how does the risk change?"*\n- *"What infrastructure or villages are exposed in ${activeRegion.name}?"*\n- *"Draft an emergency alert for ${activeRegion.name}"*`,
-      steps: [
-        {
-          agent: "orchestrator",
-          label: "Domain Guardrail",
-          detail: `Filtered off-topic query ("${trimmed.slice(0, 35)}${trimmed.length > 35 ? "..." : ""}"). Returned pre-recorded disaster domain guidance.`,
-        },
-      ],
-      focusRegionId: activeRegion.id,
-      suggestions: [
-        `What is the risk in ${activeRegion.name}?`,
-        `If rainfall increases by 50 mm, how does the risk change?`,
-        `Show alerts for ${activeRegion.name}`,
-      ],
-      mode: "local",
-    };
-  }
-
-  // Guardrail 3: Check if user is asking about a specific location Y that is NOT the currently selected location X
+  // Check if user is asking about a specific location Y that is NOT the currently selected location X
   const queriedPlace = detectSpecificPlace(userQuery);
 
   if (

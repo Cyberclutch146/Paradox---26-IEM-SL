@@ -132,10 +132,37 @@ export interface OrchestratorRequest {
   regionId?: string;
 }
 
+export interface OrchestratorGISEvidence {
+  mean_slope?: number;
+  mean_slope_deg?: number;
+  elevation_range?: number;
+  elevation_range_m?: number;
+  high_risk_parcels?: number;
+  moderate_risk_parcels?: number;
+  parcel_ai_confidence?: string;
+}
+
+export interface OrchestratorModelOutput {
+  risk_score: number;
+  risk_level: string;
+  model?: string;
+}
+
+export interface OrchestratorEvidence {
+  weather?: Record<string, number>;
+  soil?: Record<string, number>;
+  gis?: OrchestratorGISEvidence;
+  model_output?: OrchestratorModelOutput;
+}
+
 export interface OrchestratorResult {
   risk_level: string;
   risk_score: number;
   rationale: string;
+  confidence?: string;
+  recommended_actions?: string[];
+  evidence?: OrchestratorEvidence;
+  limitations?: string[];
 }
 
 export interface OrchestratorResponse {

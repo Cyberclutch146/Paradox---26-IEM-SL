@@ -180,8 +180,9 @@ match /chat_messages/{messageId} {
     && request.resource.data.text.size() <= 1000
     && request.resource.data.displayName is string
     && (request.resource.data.photoURL is string || request.resource.data.photoURL == null)
+    && request.resource.data.regionId is string
     && request.resource.data.createdAt is timestamp
-    && request.resource.data.keys().hasOnly(['uid', 'displayName', 'photoURL', 'text', 'createdAt']);
+    && request.resource.data.keys().hasOnly(['uid', 'displayName', 'photoURL', 'text', 'regionId', 'createdAt']);
   allow update, delete: if false;
 }
 ```

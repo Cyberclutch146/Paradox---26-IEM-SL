@@ -1,0 +1,35 @@
+# Secrets
+.env
+.env.local
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+GIS_agent/venv/
+
+# Large data / models (use Git LFS if needed)
+GIS_agent/dem_tiles/*.tif
+GIS_agent/dem_tiles/*.docx
+risk_agent/model_boot_*.json
+
+# Build artifacts
+*.tgz
+*.zip
+
+# IDE/OS
+.vscode/
+.idea/
+.DS_Store
+
+# PDFs / docs (optional)
+*.pdf
+
+# Notebooks (optional)
+*.ipynb
+
+# Large GeoJSON (optional - uncomment if needed)
+# GIS_agent/ner_landslides.geojson

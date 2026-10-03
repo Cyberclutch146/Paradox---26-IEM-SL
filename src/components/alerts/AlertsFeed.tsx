@@ -101,8 +101,13 @@ interface AlertsFeedProps {
 }
 
 export default function AlertsFeed({ variant = "sidebar" }: AlertsFeedProps) {
-  const { region } = useRegion();
-  const { data, loading, error } = useData(() => getAlerts(region.id), [region.id]);
+  const { region, isRegionSet } = useRegion();
+  const { data, loading, error } = useData(
+    () => isRegionSet ? getAlerts(region.id) : Promise.resolve([]),
+    [region.id, isRegionSet]
+  );
+
+  if (!isRegionSet) return null;
 
   return (
     <AlertsFeedList

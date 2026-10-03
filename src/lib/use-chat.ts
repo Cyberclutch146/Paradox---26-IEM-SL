@@ -5,6 +5,7 @@ import {
   collection,
   addDoc,
   query,
+  where,
   orderBy,
   limit,
   onSnapshot,
@@ -25,7 +26,7 @@ const MESSAGE_LIMIT = 120;
 
 /* ── Hook ── */
 
-export function useChat(user: User | null) {
+export function useChat(user: User | null, regionId: string) {
   // Starts settled when unconfigured: stay empty rather than subscribing to
   // a database that isn't there.
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -38,10 +39,11 @@ export function useChat(user: User | null) {
      Gated on `user`: firestore.rules denies anonymous reads, so subscribing
      while signed out would only earn a permission-denied error. */
   useEffect(() => {
-    if (!db || !user) return;
+    if (!db || !user || !regionId) return;
 
     const q = query(
       collection(db, MESSAGES_COLLECTION),
+      where("regionId", "==", regionId),
       orderBy("createdAt", "desc"),
       limit(MESSAGE_LIMIT)
     );
@@ -67,21 +69,22 @@ export function useChat(user: User | null) {
     );
 
     return unsubscribe;
-  }, [user]);
+  }, [user, regionId]);
 
   /* Send a new message. */
   const sendMessage = useCallback(
     async (text: string) => {
-      if (!db || !user || !text.trim()) return;
+      if (!db || !user || !text.trim() || !regionId) return;
       await addDoc(collection(db, MESSAGES_COLLECTION), {
         uid: user.uid,
         displayName: user.displayName ?? "Anonymous",
         photoURL: user.photoURL,
         text: text.trim(),
+        regionId,
         createdAt: serverTimestamp(),
       });
     },
-    [user]
+    [user, regionId]
   );
 
   return { messages, loading, error, sendMessage };

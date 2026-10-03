@@ -1,5 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
-import type { OrchestratorRequest, OrchestratorResponse } from "@/data/types";
+import type { OrchestratorRequest, OrchestratorResponse, OrchestratorResult } from "@/data/types";
+
+/**
+ * Attempts to parse the ML server's `raw` field, which may be:
+ * - A JSON string
+ * - A ```json code block with JSON inside
+ * - Markdown with an embedded ```json block
+ */
+function parseRawResult(raw: string): Partial<OrchestratorResult> | null {
+  if (!raw || typeof raw !== "string") return null;
+  const trimmed = raw.trim();
+
+  // Try direct JSON parse
+  if (trimmed.startsWith("{")) {
+    try { return JSON.parse(trimmed); } catch {}
+  }
+
+  // Try extracting from ```json ... ``` code block
+  const codeBlockMatch = trimmed.match(/```json\s*([\s\S]*?)```/);
+  if (codeBlockMatch) {
+    try { return JSON.parse(codeBlockMatch[1].trim()); } catch {}
+  }
+
+  return null;
+}
 
 export async function POST(request: NextRequest) {
   let body: Partial<OrchestratorRequest>;
@@ -136,16 +160,29 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await upstreamRes.json();
-    const result = data.result || data;
+    const rawResult = data.result || data;
+
+    // Parse the rich `raw` field that the ML server returns
+    let parsed: Partial<OrchestratorResult> = {};
+    if (typeof rawResult.raw === "string") {
+      parsed = parseRawResult(rawResult.raw) ?? {};
+    }
+
+    // Merge: prefer parsed data from `raw`, fall back to top-level fields
+    const result: OrchestratorResult = {
+      risk_level: parsed.risk_level ?? rawResult.risk_level ?? "moderate",
+      risk_score: parsed.risk_score ?? rawResult.risk_score ?? 0.45,
+      rationale: parsed.rationale ?? rawResult.rationale ?? "",
+      confidence: parsed.confidence ?? rawResult.confidence,
+      recommended_actions: parsed.recommended_actions ?? rawResult.recommended_actions,
+      evidence: parsed.evidence ?? rawResult.evidence,
+      limitations: parsed.limitations ?? rawResult.limitations,
+    };
 
     const responsePayload: OrchestratorResponse = {
       success: true,
       isFallback: false,
-      result: {
-        risk_level: result.risk_level ?? "moderate",
-        risk_score: result.risk_score ?? 0.45,
-        rationale: result.rationale ?? "",
-      },
+      result,
       timestamp: data.timestamp || new Date().toISOString(),
     };
 

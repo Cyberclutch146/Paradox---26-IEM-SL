@@ -9,7 +9,7 @@ export function GET(request: NextRequest) {
   let query = "SELECT * FROM alerts";
   let params: any[] = [];
   
-  if (region && region !== "kerala") {
+  if (region) {
     query += " WHERE regionId = ?";
     params.push(region);
   }

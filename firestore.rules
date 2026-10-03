@@ -24,10 +24,12 @@ service cloud.firestore {
         && request.resource.data.displayName is string
         // photoURL is either a string or null.
         && (request.resource.data.photoURL is string || request.resource.data.photoURL == null)
+        // regionId must be a string
+        && request.resource.data.regionId is string
         // createdAt must be a server timestamp.
         && request.resource.data.createdAt is timestamp
-        // Only these 5 fields are allowed, nothing extra.
-        && request.resource.data.keys().hasOnly(['uid', 'displayName', 'photoURL', 'text', 'createdAt']);
+        // Only these 6 fields are allowed, nothing extra.
+        && request.resource.data.keys().hasOnly(['uid', 'displayName', 'photoURL', 'text', 'regionId', 'createdAt']);
 
       // Messages are an immutable log -- no edits or deletes.
       allow update, delete: if false;

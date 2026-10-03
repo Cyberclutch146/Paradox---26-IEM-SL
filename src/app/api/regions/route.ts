@@ -10,7 +10,7 @@ export function GET() {
     id: r.id,
     name: r.name,
     subLabel: r.subLabel,
-    type: r.id === "kerala" || r.id === "uttarakhand" || r.id === "assam" ? "state" : (r.id === "kochi" || r.id === "mumbai" ? "metro" : "district"),
+    type: "state",
     center: { lat: r.mapCenterLat, lng: r.mapCenterLng },
     zoom: r.mapZoom,
   }));

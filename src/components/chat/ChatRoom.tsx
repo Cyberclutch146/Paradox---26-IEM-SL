@@ -3,6 +3,7 @@
 import { useRef, useEffect, useState, type FormEvent, type KeyboardEvent } from "react";
 import Link from "next/link";
 import { useAuth } from "@/state/auth-context";
+import { useRegion } from "@/state/region-context";
 import { useChat, type ChatMessage } from "@/lib/use-chat";
 import { cn } from "@/lib/utils";
 
@@ -280,7 +281,8 @@ function NotConfigured() {
 
 export default function ChatRoom() {
   const { user, loading: authLoading, configured, signIn, signOut } = useAuth();
-  const { messages, loading: chatLoading, error: chatError, sendMessage } = useChat(user);
+  const { region } = useRegion();
+  const { messages, loading: chatLoading, error: chatError, sendMessage } = useChat(user, region.id);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   /* Auto-scroll when new messages arrive. */
@@ -330,7 +332,7 @@ export default function ChatRoom() {
           </div>
           <div className="h-5 w-px bg-border-subtle" />
           <div className="flex items-baseline gap-2.5">
-            <h2 className="serif-display text-xl font-medium text-text-primary tracking-tight">Field Log</h2>
+            <h2 className="serif-display text-xl font-medium text-text-primary tracking-tight">Field Log — {region.name}</h2>
             <span className="font-data text-[11px] text-text-tertiary">
               {messages.length} messages
             </span>
