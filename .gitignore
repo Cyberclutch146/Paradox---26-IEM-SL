@@ -45,3 +45,9 @@ tmp/
 distra.db
 distra.db-shm
 distra.db-wal
+
+.venv/
+venv/
+__pycache__/
+.env
+*.pyc
