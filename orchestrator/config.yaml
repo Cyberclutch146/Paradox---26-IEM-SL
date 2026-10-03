@@ -1,0 +1,48 @@
+# Orchestrator Configuration
+# Copy this file and modify values as needed
+
+openrouter:
+  # OpenRouter model slug (e.g., "qwen/qwen3.8-27b:free", "anthropic/claude-3.5-sonnet", "google/gemini-pro-1.5")
+  model: "deepseek/deepseek-v4.1-flash"
+  # OpenRouter API endpoint (usually don't change)
+  url: "https://openrouter.ai/api/v1/chat/completions"
+  # Request timeout in seconds
+  timeout_seconds: 60
+
+orchestrator:
+  # Maximum orchestration rounds for tool calling
+  max_rounds: 6
+  # Host to bind to
+  host: "127.0.0.1"
+  # Port to listen on
+  port: 8080
+
+agents:
+  # GIS agent URL
+  gis_url: "http://127.0.0.1:8000/api/gis/inference"
+  # Risk scoring agent URL
+  risk_url: "http://127.0.0.1:8002/score"
+  # Agent request timeout in seconds
+  timeout_seconds: 20
+
+gis:
+  # Bounding box radius in degrees for point locations
+  bbox_degrees: 0.01
+  # DEM directory path (relative to orchestrator directory)
+  dem_dir: "GIS_agent/dem_tiles"
+
+risk:
+  # Risk model path (relative to orchestrator directory)
+  model_path: "risk_agent/model_main (1).json"
+  # Risk service port
+  port: 8002
+  # Risk service host
+  host: "127.0.0.1"
+
+data_fetcher:
+  # Nominatim (OpenStreetMap) geocoding endpoint
+  nominatim_url: "https://nominatim.openstreetmap.org/search"
+  # Open-Meteo ECMWF endpoint for weather/soil
+  open_meteo_url: "https://api.open-meteo.com/v1/ecmwf"
+  # Copernicus DEM directory (local tiles)
+  copernicus_dem_dir: "GIS_agent/dem_tiles"

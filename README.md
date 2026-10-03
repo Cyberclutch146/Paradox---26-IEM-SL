@@ -14,7 +14,9 @@ Built with **Next.js 16** (App Router), **React 19**, **TypeScript**, **Tailwind
 - [Features](#features)
 - [Pages & Routes](#pages--routes)
 - [Tech Stack](#tech-stack)
-- [Architecture](#architecture)
+- [Architecture & Process Flows](#-architecture--process-flows)
+- [Project Architecture](#-project-architecture)
+- [Multi-Agent ML Orchestrator](#multi-agent-ml-orchestrator)
 - [Risk Scoring Engine](#risk-scoring-engine)
 - [Live Chat & Firebase](#live-chat--firebase)
 - [Design Language](#design-language)
@@ -105,73 +107,118 @@ If you skip this, the chat page shows setup instructions instead of a broken sig
 
 ---
 
-## Architecture
+## 🏗 Architecture & Process Flows
 
-```
-src/
-├── app/                    # Next.js App Router
-│   ├── page.tsx            # Landing page
-│   ├── dashboard/          # Main risk dashboard
-│   ├── map/                # Full-screen map view
-│   ├── alerts/             # Alerts feed
-│   ├── community/          # Community reports
-│   ├── reports/            # Zone reports
-│   ├── chat/               # Live chat (Firebase)
-│   ├── api/                # Route handlers
-│   ├── globals.css         # Design tokens, utilities, animations
-│   └── layout.tsx          # Root layout (fonts, AuthProvider)
-│
-├── components/
-│   ├── alerts/             # AlertFeed, AlertCard
-│   ├── chat/               # ChatRoom (sign-in, messages, composer)
-│   ├── community/          # CommunityPreview, MessageCard
-│   ├── insights/           # InsightCard, sparklines
-│   ├── layout/             # TopNav, Footer, RegionPicker
-│   ├── map/                # RiskMap, LayerToggle, MapLegend
-│   └── risk/               # RiskGauge, RiskSummaryPanel
-│
-├── data/
-│   ├── types.ts            # Shared domain types (the contract)
-│   ├── regions.ts          # 13 monitored regions
-│   └── mock*.ts            # Sample fixtures (alerts, zones, insights, community)
-│
-├── lib/
-│   ├── data-client.ts      # Provider seam (mock ↔ api)
-│   ├── mock-store.ts       # Fixture accessors
-│   ├── risk-summary.ts     # Scoring engine
-│   ├── risk-colors.ts      # Risk level → colour mapping
-│   ├── firebase.ts         # Firebase SDK init (fail-soft)
-│   ├── use-chat.ts         # Firestore snapshot hook
-│   ├── chat-messages.ts    # Pure transform (tested)
-│   ├── use-data.ts         # Generic async data hook
-│   └── utils.ts            # cn(), formatTimeAgo(), etc.
-│
-├── state/
-│   ├── region-context.tsx  # Region selection (synced to ?region=)
-│   └── auth-context.tsx    # Firebase auth (Google sign-in)
-│
-└── firestore.rules         # Security boundary for chat
+### High-Level System Architecture
+
+```mermaid
+graph TD
+    Telemetry[Telemetry & Weather Feeds] --> DataClient[Data Client / Geotechnical Engine]
+    GroundReports[Community Ground Truth] --> NextAPI[Next.js Serverless API Routes]
+    ChatMessages[Live Operations Chat] --> Firestore[(Firebase Firestore & Auth)]
+    UserQuery[Interactive What-If Query] --> NextAPI
+    
+    NextAPI -->|Primary Inference| Orchestrator[Remote Multi-Agent ML Orchestrator]
+    NextAPI -->|Secondary Explainer| Gemini[Google Gemini 2.0 / Flash]
+    
+    Orchestrator -->|Parcel Clustering & DEM Relief| GISAgent[GIS Hazard Sub-Agent]
+    Orchestrator -->|Point-Risk & Saturation Scoring| PointModel[Point-Risk Geotechnical Model]
+    Orchestrator -->|Synthesize Evidence & Risk Delta| Synthesizer[LLM Counterfactual Synthesizer]
 ```
 
-### Data flow
+### Disaster Intelligence & Multi-Agent Inference Flow
 
-The project has two separate data paths by design:
+```mermaid
+sequenceDiagram
+    participant Responder as Field Responder / Ops
+    participant Frontend as Next.js Dashboard
+    participant ChatAPI as /api/chat Bridge
+    participant Orchestrator as ML Orchestrator
+    participant GISAgent as GIS Sub-Agent
+    participant PointModel as Point-Risk Model
+    participant Synthesizer as LLM Synthesizer
 
-**Risk data** (dashboard, map, alerts, community, reports):
+    Responder->>Frontend: Submits Question ("+50 mm rainfall surge impact")
+    Frontend->>ChatAPI: POST /api/chat { regionId, query, messages }
+    ChatAPI->>Orchestrator: POST /predict (Coordinates, weather, soil, question)
+    
+    par Multi-Agent Parallel Inspection
+        Orchestrator->>GISAgent: Query parcel clusters, mean slope & DEM relief
+        GISAgent-->>Orchestrator: 85 High-risk parcels, 18.9° mean slope
+    and Geotechnical Simulation
+        Orchestrator->>PointModel: Run baseline & +50mm counterfactual scenario
+        PointModel-->>Orchestrator: Baseline 0.0134 -> Scenario 0.0161 (+20.5% rel)
+    end
 
+    Orchestrator->>Synthesizer: Reconcile evidence streams & calculate risk shift
+    Synthesizer-->>Orchestrator: Formulated findings, actions & geotechnical telemetry
+    Orchestrator-->>ChatAPI: 200 OK (Synthesized multi-agent assessment)
+    ChatAPI-->>Frontend: Structured editorial markdown response
+    Frontend-->>Responder: Display direct model analysis, actions & evidence
 ```
-Component → useData(fetcher) → data-client.ts → mock-store / API route
+
+---
+
+## 📁 Project Architecture
+
+```text
+├── src/
+│   ├── app/                # Next.js App Router (Pages, Layouts & APIs)
+│   │   ├── (marketing)/    # Landing & Showcase page
+│   │   ├── dashboard/      # Main operational risk dashboard
+│   │   ├── map/            # Full-screen Leaflet interactive risk map
+│   │   ├── alerts/         # Filterable severity-tiered alert feed
+│   │   ├── community/      # Geotagged ground truth reports
+│   │   ├── reports/        # Zone-by-zone geotechnical reports
+│   │   ├── chat/           # Live responder chat room (Firebase)
+│   │   └── api/            # Serverless API routes (/api/chat, /api/predict)
+│   ├── components/         # Modular UI Components (Map, Gauges, Feeds, Chat)
+│   ├── data/               # Domain types, region definitions & sample fixtures
+│   ├── lib/
+│   │   ├── agents/         # Multi-agent bridge, place detection & Gemini brain
+│   │   ├── data-client.ts  # Provider seam (mock ↔ api)
+│   │   ├── risk-summary.ts # Geotechnical scoring engine
+│   │   └── firebase.ts     # Fail-soft Firebase initialization
+│   ├── state/              # Global state contexts (RegionContext, AuthContext)
+│   └── styles/             # Tailwind CSS tokens & global animations
+├── firestore.rules         # Cloud Firestore security boundary
+└── README.md               # System documentation & deployment guide
 ```
 
-Components never import fixtures directly — they call accessors on `data-client.ts`, which dispatches to the mock store or fetch-based API handlers depending on `NEXT_PUBLIC_DATA_PROVIDER`. The returned shapes match `src/data/types.ts`, so swapping to a real backend means reimplementing the same interface.
+### Core Data Paths
 
-**Realtime chat** (`/chat` only):
+The platform establishes three segregated data channels:
 
-```
-ChatRoom → useAuth() → useChat(user) → Firestore onSnapshot
-```
+1. **Risk Telemetry & Sensor Feeds** (dashboard, map, alerts, community):
+   ```
+   Component → useData(fetcher) → data-client.ts → mock-store / API routes
+   ```
+   Components call typed accessors on `data-client.ts`, which dispatches to local fixtures or API routes according to `NEXT_PUBLIC_DATA_PROVIDER`.
 
-Chat is the one path that hits a real database. It uses Firebase Authentication for sign-in and Firestore's `onSnapshot` for live message delivery. This path is completely separate from `data-client.ts` and is documented in [docs/realtime.md](docs/realtime.md).
+2. **Multi-Agent Intelligence & Prediction** (`/api/chat`, `/api/predict`):
+   ```
+   Chatbox → /api/chat → orchestrator-bridge.ts → Remote Orchestrator (/predict)
+   ```
+   Live inference queries the remote ML orchestrator. When active, its multi-agent findings (GIS parcels, scenario calculations, operational recommendations) drive chat answers directly.
+
+3. **Realtime Responder Collaboration** (`/chat` only):
+   ```
+   ChatRoom → useAuth() → useChat(user) → Firestore onSnapshot
+   ```
+   Uses Firebase Authentication for identity and Firestore's `onSnapshot` for real-time peer messaging without polling.
+
+---
+
+## Multi-Agent ML Orchestrator
+
+The backend intelligence engine is governed by [`src/lib/agents/orchestrator-bridge.ts`](src/lib/agents/orchestrator-bridge.ts). It coordinates specialized sub-agents and presents context-specific insights:
+
+- **GIS Hazard Sub-Agent**: Evaluates high-resolution raster and polygon layers, calculating slope inclination angles, digital elevation model (DEM) relief, and identifying high-risk parcels.
+- **Geotechnical Point-Risk Model**: Incorporates 24-hour rainfall, cumulative 72-hour totals, 7-day and 30-day antecedent precipitation, volumetric soil moisture (`sm_0_7cm_ante`, `sm_0_7cm_change_3d`), and temporal harmonic features (`doy_sin`, `doy_cos`).
+- **LLM Synthesizer & Counterfactual Engine**: Reconciles discrepancies between point-level scores and parcel-level GIS clusters, computes dynamic counterfactual scenarios (e.g. `+50 mm` rainfall surge impact on slope safety factors), and drafts actionable field advisories.
+- **Location Verification Guard**: [`src/lib/agents/places.ts`](src/lib/agents/places.ts) verifies whether user queries reference an unselected state/district (e.g. querying *Arunachal Pradesh* while *Assam* is active) and prompts the user to switch with a single click.
+- **Spatial Coordinate Calibration**: Maps geographic boundaries to validated study coordinates (e.g. `27.1° N, 93.6° E` for Arunachal Pradesh / Papum Pare) to ensure raster bounding box compatibility.
+- **Multi-Tier Resilience**: If the remote orchestrator service times out or is offline, the bridge seamlessly engages a secondary **Gemini Flash** assistant, or the **local rule-based engine**, ensuring zero downtime.
 
 ---
 
@@ -259,18 +306,23 @@ A Leaflet canvas with the standard **OpenStreetMap** basemap (with required attr
 
 ## Environment Variables
 
-All variables are prefixed with `NEXT_PUBLIC_` and inlined into the client bundle at build time. Restart the dev server after changing `.env.local`.
+Client-exposed variables are prefixed with `NEXT_PUBLIC_` and inlined into the client bundle at build time. Server-side secrets (`ORCHESTRATOR_*`, `GEMINI_*`) remain strictly in the Next.js runtime environment. Restart the dev server after editing `.env.local`.
 
 | Variable | Required | Default | Purpose |
 | --- | --- | --- | --- |
-| `NEXT_PUBLIC_DATA_PROVIDER` | No | `mock` | `mock` reads bundled fixtures; `api` fetches from `/api/*` route handlers |
-| `NEXT_PUBLIC_FIREBASE_API_KEY` | For `/chat` | — | Firebase web app config |
-| `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | For `/chat` | — | Firebase web app config |
-| `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | For `/chat` | — | Firebase web app config |
-| `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` | For `/chat` | — | Firebase web app config |
-| `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | For `/chat` | — | Firebase web app config |
-| `NEXT_PUBLIC_FIREBASE_APP_ID` | For `/chat` | — | Firebase web app config |
-| `NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID` | No | — | Unused (Analytics is not initialised) |
+| `NEXT_PUBLIC_DATA_PROVIDER` | No | `mock` | `mock` reads local fixtures; `api` fetches from `/api/*` route handlers |
+| `ORCHESTRATOR_AGENT_URL` | For live ML | `http://127.0.0.1:8080/predict` | Endpoint URL for the remote multi-agent ML orchestrator service |
+| `ORCHESTRATOR_TIMEOUT_MS` | No | `60000` | Request timeout window in ms for multi-agent synthesis & GIS analysis |
+| `ORCHESTRATOR_API_KEY` | Optional | — | Bearer authentication token for secured orchestrator endpoints |
+| `GEMINI_API_KEY` | Optional | — | Google Gemini API key for secondary conversational assistant |
+| `GEMINI_MODEL` | No | `gemini-3.8-flash` | Gemini model version (`gemini-3.8-flash`, `gemini-2.0-flash`) |
+| `NEXT_PUBLIC_FIREBASE_API_KEY` | For `/chat` | — | Firebase web app configuration |
+| `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | For `/chat` | — | Firebase web app configuration |
+| `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | For `/chat` | — | Firebase web app configuration |
+| `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` | For `/chat` | — | Firebase web app configuration |
+| `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | For `/chat` | — | Firebase web app configuration |
+| `NEXT_PUBLIC_FIREBASE_APP_ID` | For `/chat` | — | Firebase web app configuration |
+| `NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID` | No | — | Optional analytics measurement ID |
 
 See [`.env.example`](.env.example) for the template with explanatory comments. The Firebase web config is public by design — security comes from `firestore.rules`, not from hiding the config.
 
