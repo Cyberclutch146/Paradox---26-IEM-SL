@@ -14,7 +14,8 @@ Built with **Next.js 16** (App Router), **React 19**, **TypeScript**, **Tailwind
 - [Features](#features)
 - [Pages & Routes](#pages--routes)
 - [Tech Stack](#tech-stack)
-- [Architecture & System Flow](#architecture--system-flow)
+- [Architecture & Process Flows](#-architecture--process-flows)
+- [Project Architecture](#-project-architecture)
 - [Multi-Agent ML Orchestrator](#multi-agent-ml-orchestrator)
 - [Risk Scoring Engine](#risk-scoring-engine)
 - [Live Chat & Firebase](#live-chat--firebase)
@@ -106,165 +107,85 @@ If you skip this, the chat page shows setup instructions instead of a broken sig
 
 ---
 
-## Architecture & System Flow
+## 🏗 Architecture & Process Flows
 
-DistraAI couples a responsive spatial intelligence interface with a hybrid multi-agent backend architecture designed for resilience in low-connectivity or high-latency disaster scenarios.
-
-### 1. High-Level System Architecture
+### High-Level System Architecture
 
 ```mermaid
 graph TD
-    subgraph Client["Client Tier (Next.js 16 + React 19)"]
-        UI["Field Log UI / Dashboard"]
-        Map["Leaflet Map Engine"]
-        ChatUI["Interactive Intelligence Chatbox"]
-        State["Region Context & Location Guard"]
-    end
-
-    subgraph Gateway["API Gateway & Data Seam"]
-        APIChat["POST /api/chat"]
-        APIPredict["POST /api/predict"]
-        DataClient["src/lib/data-client.ts"]
-    end
-
-    subgraph Orchestrator["Remote Multi-Agent ML Orchestrator"]
-        OrchEndpoint["ORCHESTRATOR_AGENT_URL (/predict)"]
-        GISAgent["GIS Hazard Sub-Agent<br/>(Parcel Clusters, Mean Slope, DEM Relief)"]
-        MLPoint["Point-Risk ML Model<br/>(Rainfall, Antecedent Moisture & Temporal Sines)"]
-        Synthesizer["LLM Synthesizer & Counterfactual Engine"]
-    end
-
-    subgraph Fallback["Fail-Soft Resilience Tier"]
-        Gemini["Gemini Flash Assistant<br/>(Secondary Explainer)"]
-        RuleEngine["Direct Rule-Based Engine<br/>(Hydrological & Shear Models)"]
-        MockStore["Local Geotechnical Fixtures"]
-    end
-
-    subgraph Realtime["Realtime Collaboration Tier"]
-        FBAuth["Firebase Authentication (Google)"]
-        Firestore["Cloud Firestore (onSnapshot)"]
-    end
-
-    UI --> State
-    ChatUI --> APIChat
-    Map --> DataClient
-    UI --> DataClient
-
-    APIChat --> OrchEndpoint
-    APIPredict --> OrchEndpoint
+    Telemetry[Telemetry & Weather Feeds] --> DataClient[Data Client / Geotechnical Engine]
+    GroundReports[Community Ground Truth] --> NextAPI[Next.js Serverless API Routes]
+    ChatMessages[Live Operations Chat] --> Firestore[(Firebase Firestore & Auth)]
+    UserQuery[Interactive What-If Query] --> NextAPI
     
-    OrchEndpoint --> GISAgent
-    OrchEndpoint --> MLPoint
-    GISAgent --> Synthesizer
-    MLPoint --> Synthesizer
-    Synthesizer --> APIChat
-
-    OrchEndpoint -.->|Timeout / Offline| Gemini
-    Gemini -.->|API Unavailable| RuleEngine
-    RuleEngine --> APIChat
-
-    DataClient --> MockStore
-
-    UI --> FBAuth
-    ChatUI --> Firestore
+    NextAPI -->|Primary Inference| Orchestrator[Remote Multi-Agent ML Orchestrator]
+    NextAPI -->|Secondary Explainer| Gemini[Google Gemini 2.0 / Flash]
+    
+    Orchestrator -->|Parcel Clustering & DEM Relief| GISAgent[GIS Hazard Sub-Agent]
+    Orchestrator -->|Point-Risk & Saturation Scoring| PointModel[Point-Risk Geotechnical Model]
+    Orchestrator -->|Synthesize Evidence & Risk Delta| Synthesizer[LLM Counterfactual Synthesizer]
 ```
 
----
-
-### 2. Multi-Agent Reasoning & Query Flow
-
-When a responder or operations center submits a question (e.g., *"if the rainfall increases by 50 mm, how does the risk change?"* or asks for evacuation advisories), the query flows through the following pipeline:
+### Disaster Intelligence & Multi-Agent Inference Flow
 
 ```mermaid
 sequenceDiagram
-    autonumber
-    actor Responder as Operations Center / Field Responder
-    participant Chat as Dashboard Chatbox
-    participant API as /api/chat Bridge
-    participant Orch as Remote ML Orchestrator
-    participant GIS as GIS Sub-Agent
-    participant ML as Point Model
-    participant Synth as LLM Synthesis Engine
+    participant Responder as Field Responder / Ops
+    participant Frontend as Next.js Dashboard
+    participant ChatAPI as /api/chat Bridge
+    participant Orchestrator as ML Orchestrator
+    participant GISAgent as GIS Sub-Agent
+    participant PointModel as Point-Risk Model
+    participant Synthesizer as LLM Synthesizer
 
-    Responder->>Chat: Submit Query ("+50 mm rainfall risk impact")
-    Chat->>API: POST /api/chat { regionId, query, messages }
+    Responder->>Frontend: Submits Question ("+50 mm rainfall surge impact")
+    Frontend->>ChatAPI: POST /api/chat { regionId, query, messages }
+    ChatAPI->>Orchestrator: POST /predict (Coordinates, weather, soil, question)
     
-    alt Location Mismatch Guard
-        API-->>Chat: Return prompt: Queried Region Y while Region X is selected (1-click switch)
-    else Valid Monitored Region
-        API->>Orch: POST /predict (Payload: calibrated coords, weather, soil, query)
-        par GIS Parcel Inspection
-            Orch->>GIS: Query parcel clusters, mean slope & relief
-            GIS-->>Orch: 85 High-risk parcels, 18.9° mean slope, 469m relief
-        and Point-Risk & Counterfactual Simulation
-            Orch->>ML: Run baseline & +50mm counterfactual scenario
-            ML-->>Orch: Baseline score 0.0134 -> Scenario score 0.0161 (+20.5% rel)
-        end
-        Orch->>Synth: Synthesize evidence streams & resolve discrepancies
-        Synth-->>Orch: Synthesized rationale, actions, geotechnical evidence & limitations
-        Orch-->>API: 200 OK (synthesized multi-agent result)
-        API-->>Chat: Render formatted operational findings, actions & evidence
-        Chat-->>Responder: Display tailored answer directly from the model
+    par Multi-Agent Parallel Inspection
+        Orchestrator->>GISAgent: Query parcel clusters, mean slope & DEM relief
+        GISAgent-->>Orchestrator: 85 High-risk parcels, 18.9° mean slope
+    and Geotechnical Simulation
+        Orchestrator->>PointModel: Run baseline & +50mm counterfactual scenario
+        PointModel-->>Orchestrator: Baseline 0.0134 -> Scenario 0.0161 (+20.5% rel)
     end
+
+    Orchestrator->>Synthesizer: Reconcile evidence streams & calculate risk shift
+    Synthesizer-->>Orchestrator: Formulated findings, actions & geotechnical telemetry
+    Orchestrator-->>ChatAPI: 200 OK (Synthesized multi-agent assessment)
+    ChatAPI-->>Frontend: Structured editorial markdown response
+    Frontend-->>Responder: Display direct model analysis, actions & evidence
 ```
 
 ---
 
-### 3. Directory Layout
+## 📁 Project Architecture
 
-```
-src/
-├── app/                    # Next.js App Router
-│   ├── page.tsx            # Landing page
-│   ├── dashboard/          # Main risk dashboard
-│   ├── map/                # Full-screen map view
-│   ├── alerts/             # Alerts feed
-│   ├── community/          # Community reports
-│   ├── reports/            # Zone reports
-│   ├── chat/               # Live chat (Firebase)
-│   ├── api/
-│   │   ├── chat/           # Assistant endpoint connecting to Orchestrator Bridge
-│   │   ├── predict/        # Direct ML Predictor gateway
-│   │   └── ...             # Route handlers (alerts, zones, insights)
-│   ├── globals.css         # Design tokens, utilities, animations
-│   └── layout.tsx          # Root layout (fonts, AuthProvider)
-│
-├── components/
-│   ├── alerts/             # AlertFeed, AlertCard
-│   ├── chat/               # ChatRoom (sign-in, messages, composer)
-│   ├── community/          # CommunityPreview, MessageCard
-│   ├── insights/           # InsightCard, sparklines
-│   ├── layout/             # TopNav, Footer, RegionPicker
-│   ├── map/                # RiskMap, LayerToggle, MapLegend
-│   └── risk/               # RiskGauge, RiskSummaryPanel
-│
-├── data/
-│   ├── types.ts            # Shared domain types (the contract)
-│   ├── regions.ts          # Monitored Indian regions & bounding centroids
-│   └── mock*.ts            # Sample fixtures (alerts, zones, insights, community)
-│
-├── lib/
-│   ├── agents/
-│   │   ├── orchestrator-bridge.ts  # Primary remote Orchestrator dispatcher & formatter
-│   │   ├── places.ts               # Place resolution & unselected location guard
-│   │   ├── gemini-brain.ts         # Secondary Gemini assistant integration
-│   │   └── types.ts                # Agent contracts & steps
-│   ├── data-client.ts      # Provider seam (mock ↔ api)
-│   ├── mock-store.ts       # Fixture accessors
-│   ├── risk-summary.ts     # Rule-based scoring engine
-│   ├── risk-colors.ts      # Risk level → colour mapping
-│   ├── firebase.ts         # Firebase SDK init (fail-soft)
-│   ├── use-chat.ts         # Firestore snapshot hook
-│   └── use-data.ts         # Generic async data hook
-│
-├── state/
-│   ├── region-context.tsx  # Region selection (synced to ?region=)
-│   └── auth-context.tsx    # Firebase auth (Google sign-in)
-│
-└── firestore.rules         # Security boundary for chat
+```text
+├── src/
+│   ├── app/                # Next.js App Router (Pages, Layouts & APIs)
+│   │   ├── (marketing)/    # Landing & Showcase page
+│   │   ├── dashboard/      # Main operational risk dashboard
+│   │   ├── map/            # Full-screen Leaflet interactive risk map
+│   │   ├── alerts/         # Filterable severity-tiered alert feed
+│   │   ├── community/      # Geotagged ground truth reports
+│   │   ├── reports/        # Zone-by-zone geotechnical reports
+│   │   ├── chat/           # Live responder chat room (Firebase)
+│   │   └── api/            # Serverless API routes (/api/chat, /api/predict)
+│   ├── components/         # Modular UI Components (Map, Gauges, Feeds, Chat)
+│   ├── data/               # Domain types, region definitions & sample fixtures
+│   ├── lib/
+│   │   ├── agents/         # Multi-agent bridge, place detection & Gemini brain
+│   │   ├── data-client.ts  # Provider seam (mock ↔ api)
+│   │   ├── risk-summary.ts # Geotechnical scoring engine
+│   │   └── firebase.ts     # Fail-soft Firebase initialization
+│   ├── state/              # Global state contexts (RegionContext, AuthContext)
+│   └── styles/             # Tailwind CSS tokens & global animations
+├── firestore.rules         # Cloud Firestore security boundary
+└── README.md               # System documentation & deployment guide
 ```
 
-### 4. Data Paths
+### Core Data Paths
 
 The platform establishes three segregated data channels:
 
