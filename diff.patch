@@ -1,0 +1,596 @@
+﻿diff --git a/src/app/dashboard-view.tsx b/src/app/dashboard-view.tsx
+index 06e45a4..d820d45 100644
+--- a/src/app/dashboard-view.tsx
++++ b/src/app/dashboard-view.tsx
+@@ -40,18 +40,19 @@ function DataCard({
+   accent?: boolean;
+ }) {
+   return (
+-    <div className="card-tint px-4 py-3.5 animate-fade-in">
++    <div className="relative overflow-hidden rounded-xl bg-[#141414]/80 backdrop-blur-md border border-white/[0.06] px-4 py-3.5 animate-fade-in">
++      <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#ff7a00]/40 to-transparent" />
+       <div className="eyebrow eyebrow-xs mb-1.5">{label}</div>
+       <div className="flex items-baseline gap-1.5">
+         <span
+           className={cn(
+             "font-data text-2xl font-bold tracking-tight",
+-            accent ? getRiskColorClass("high") : "text-text-primary"
++            accent ? getRiskColorClass("high") : "text-white"
+           )}
+         >
+           {value}
+         </span>
+-        {subValue && <span className="text-xs text-text-tertiary">{subValue}</span>}
++        {subValue && <span className="text-xs text-[#5a5a66]">{subValue}</span>}
+       </div>
+     </div>
+   );
+@@ -142,10 +143,10 @@ export default function DashboardView() {
+                   <button 
+                     onClick={handleDetectLocation}
+                     className={cn(
+-                      "flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-accent text-xs font-medium transition-all duration-300",
++                      "flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium transition-all duration-300",
+                       isDetecting 
+-                        ? "bg-accent text-text-on-accent opacity-80 cursor-wait" 
+-                        : "bg-transparent text-accent hover:bg-accent hover:text-text-on-accent shadow-sm hover:shadow-md"
++                        ? "bg-[#ff7a00] text-white border-[#ff7a00] opacity-80 cursor-wait" 
++                        : "bg-transparent text-[#ff7a00] border-[#ff7a00]/40 hover:bg-[#ff7a00] hover:text-white hover:border-[#ff7a00] shadow-sm hover:shadow-[0_0_12px_rgba(255,122,0,0.2)]"
+                     )}
+                     disabled={isDetecting}
+                   >
+@@ -269,9 +270,9 @@ export default function DashboardView() {
+ 
+ function SnapshotStat({ label, value }: { label: string; value: string }) {
+   return (
+-    <div className="rounded-lg bg-bg-surface border border-border-subtle px-3 py-2.5">
++    <div className="rounded-lg bg-white/[0.03] border border-white/[0.06] px-3 py-2.5">
+       <div className="eyebrow eyebrow-xs mb-1">{label}</div>
+-      <div className="font-data text-sm font-semibold text-text-primary truncate">{value}</div>
++      <div className="font-data text-sm font-semibold text-white truncate">{value}</div>
+     </div>
+   );
+ }
+\ No newline at end of file
+diff --git a/src/app/globals.css b/src/app/globals.css
+index 3fcc143..f51c150 100644
+--- a/src/app/globals.css
++++ b/src/app/globals.css
+@@ -17,40 +17,40 @@
+ 
+ /* ─── Design Tokens ─── */
+ :root {
+-  /* Canvas — sleek modern white/grey */
+-  --bg-primary: #f8f9fa;          
+-  --bg-surface: #ffffff;          
+-  --bg-surface-hover: #f1f3f5;    
+-  --bg-elevated: #ffffff;         
+-  --bg-wash: #e9ecef;             
++  /* Canvas — premium dark */
++  --bg-primary: #0d0d0d;
++  --bg-surface: #141414;
++  --bg-surface-hover: #1f1f1f;
++  --bg-elevated: #1c1c1c;
++  --bg-wash: #111111;
+ 
+   /* Rules & hairlines */
+-  --border-subtle: #e5e7eb;
+-  --border-strong: #d1d5db;
++  --border-subtle: rgba(255, 255, 255, 0.08);
++  --border-strong: rgba(255, 255, 255, 0.15);
+   --border-focus: #ff7a00;
+ 
+-  /* Ink */
+-  --text-primary: #111827;
+-  --text-secondary: #4b5563;
+-  --text-tertiary: #9ca3af;
++  /* Ink — light on dark */
++  --text-primary: #f0f0f0;
++  --text-secondary: #a1a1aa;
++  --text-tertiary: #5a5a66;
+ 
+-  /* Risk severity — keeping existing ones but modernized */
+-  --risk-low: #10b981;            
+-  --risk-watch: #f59e0b;          
+-  --risk-warning: #f97316;        
+-  --risk-danger: #ef4444;         
++  /* Risk severity — vibrant on dark */
++  --risk-low: #34d399;
++  --risk-watch: #fbbf24;
++  --risk-warning: #fb923c;
++  --risk-danger: #f87171;
+ 
+   /* Accent — vibrant Avento orange */
+   --accent: #ff7a00;
+   --accent-hover: #e06b00;
+-  --accent-muted: #ffe8d6;        
+-  --accent-subtle: #fff4ec;       
++  --accent-muted: #3d2200;
++  --accent-subtle: #1a0f00;
+   --text-on-accent: #ffffff;
+ 
+-  /* Elevation — two warm-tinted levels, no glow */
+-  --shadow-card: 0 1px 2px rgba(88, 72, 56, 0.08);
+-  --shadow-card-hover: 0 12px 32px rgba(88, 72, 56, 0.14);
+-  --shadow-pop: 0 16px 44px rgba(80, 64, 50, 0.18);
++  /* Elevation — dark shadow levels */
++  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.4);
++  --shadow-card-hover: 0 12px 32px rgba(0, 0, 0, 0.5);
++  --shadow-pop: 0 16px 44px rgba(0, 0, 0, 0.6);
+ 
+   /* Radius */
+   --radius-sm: 8px;
+@@ -84,7 +84,7 @@
+   --color-text-on-accent: var(--text-on-accent);
+   --font-sans: var(--font-karla);
+   --font-mono: var(--font-jetbrains-mono);
+-  --font-display: var(--font-fraunces);
++  --font-display: var(--font-cormorant);
+   --shadow-card: var(--shadow-card);
+   --shadow-card-hover: var(--shadow-card-hover);
+   --shadow-pop: var(--shadow-pop);
+@@ -92,7 +92,7 @@
+ 
+ /* ─── Base ─── */
+ html {
+-  color-scheme: light;
++  color-scheme: dark;
+   scroll-behavior: smooth;
+ }
+ 
+@@ -105,14 +105,14 @@ body {
+   text-rendering: optimizeLegibility;
+ }
+ 
+-/* Subtle paper grain on the canvas only — never on content containers */
++/* Subtle noise grain on dark canvas — very faint */
+ body::before {
+   content: "";
+   position: fixed;
+   inset: 0;
+   pointer-events: none;
+   z-index: 0;
+-  opacity: 0.04;
++  opacity: 0.025;
+   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+ }
+ 
+@@ -137,7 +137,7 @@ body::before {
+ }
+ 
+ *::-webkit-scrollbar-thumb:hover {
+-  background: #b8a98f;
++  background: #555;
+ }
+ 
+ /* ─── Typography helpers ─── */
+@@ -161,17 +161,16 @@ body::before {
+   font-size: 9.5px;
+ }
+ 
+-/* Serif display defaults */
++/* Serif display defaults — Cormorant Garamond */
+ .serif-display {
+-  font-family: var(--font-fraunces), Georgia, serif;
+-  font-optical-sizing: auto;
+-  font-variation-settings: "opsz" 72, "SOFT" 0;
++  font-family: var(--font-cormorant), Georgia, serif;
++  font-weight: 500;
+   text-wrap: balance;
+ }
+ 
+ /* Editorial text link — underline, not a chip */
+ .link-editorial {
+-  font-family: var(--font-fraunces), Georgia, serif;
++  font-family: var(--font-cormorant), Georgia, serif;
+   font-size: 1.05em;
+   font-weight: 600;
+   color: var(--accent);
+@@ -208,31 +207,33 @@ body::before {
+ }
+ 
+ .card-static {
+-  background: var(--bg-surface);
+-  border: 1px solid var(--border-subtle);
++  background: rgba(20, 20, 20, 0.8);
++  backdrop-filter: blur(12px);
++  -webkit-backdrop-filter: blur(12px);
++  border: 1px solid rgba(255, 255, 255, 0.06);
+   border-radius: var(--radius-lg);
+   box-shadow: var(--shadow-card);
+ }
+ 
+ /* Contained by tint, not border — the editorial alternative */
+ .card-tint {
+-  background: var(--bg-wash);
+-  border: 1px solid transparent;
++  background: rgba(255, 255, 255, 0.03);
++  border: 1px solid rgba(255, 255, 255, 0.04);
+   border-radius: var(--radius-lg);
+ }
+ 
+ .card-glass {
+-  background: rgba(255, 253, 248, 0.72);
+-  backdrop-filter: blur(10px) saturate(1.1);
+-  -webkit-backdrop-filter: blur(10px) saturate(1.1);
+-  border: 1px solid var(--border-subtle);
++  background: rgba(30, 30, 30, 0.6);
++  backdrop-filter: blur(16px) saturate(1.2);
++  -webkit-backdrop-filter: blur(16px) saturate(1.2);
++  border: 1px solid rgba(255, 255, 255, 0.08);
+   border-radius: var(--radius-lg);
+ }
+ 
+ /* ─── Buttons ─── */
+ .btn-primary {
+   background: var(--accent);
+-  color: #fbf6ee;
++  color: #ffffff;
+   font-weight: 600;
+   border-radius: var(--radius-pill);
+   box-shadow: 0 2px 8px color-mix(in srgb, var(--accent) 30%, transparent);
+@@ -394,11 +395,16 @@ body::before {
+ }
+ 
+ .leaflet-control-attribution {
+-  background: rgba(249, 245, 236, 0.85) !important;
++  background: rgba(13, 13, 13, 0.85) !important;
+   color: var(--text-tertiary) !important;
+   font-size: 10px !important;
+ }
+ 
++/* CSS trick to create a free dark map from standard OSM tiles */
++.dark-map-mode .leaflet-tile-pane {
++  filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%) saturate(120%);
++}
++
+ .leaflet-control-attribution a {
+   color: var(--text-secondary) !important;
+ }
+@@ -410,6 +416,6 @@ body::before {
+ }
+ 
+ ::selection {
+-  background: var(--accent-muted);
+-  color: var(--text-primary);
++  background: var(--accent);
++  color: #ffffff;
+ }
+\ No newline at end of file
+diff --git a/src/app/layout.tsx b/src/app/layout.tsx
+index 2e5acb2..5fbd1af 100644
+--- a/src/app/layout.tsx
++++ b/src/app/layout.tsx
+@@ -1,13 +1,13 @@
+ import type { Metadata } from "next";
+-import { Fraunces, Karla, JetBrains_Mono } from "next/font/google";
++import { Cormorant_Garamond, Karla, JetBrains_Mono } from "next/font/google";
+ import { AuthProvider } from "@/state/auth-context";
+ import "./globals.css";
+ 
+-const fraunces = Fraunces({
+-  variable: "--font-fraunces",
++const cormorant = Cormorant_Garamond({
++  variable: "--font-cormorant",
+   subsets: ["latin"],
+   display: "swap",
+-  axes: ["opsz", "SOFT", "WONK"],
++  weight: ["300", "400", "500", "600", "700"],
+ });
+ 
+ const karla = Karla({
+@@ -41,7 +41,7 @@ export default function RootLayout({ children }: { children: React.ReactNode })
+   return (
+     <html
+       lang="en"
+-      className={`${fraunces.variable} ${karla.variable} ${jetbrainsMono.variable} h-full antialiased`}
++      className={`${cormorant.variable} ${karla.variable} ${jetbrainsMono.variable} h-full antialiased`}
+     >
+       <body className="min-h-full flex flex-col bg-bg-primary text-text-primary">
+         <AuthProvider>
+diff --git a/src/components/chatbot/AssistantBot.tsx b/src/components/chatbot/AssistantBot.tsx
+index b059a8a..69c549d 100644
+--- a/src/components/chatbot/AssistantBot.tsx
++++ b/src/components/chatbot/AssistantBot.tsx
+@@ -98,8 +98,8 @@ export default function AssistantBot() {
+       </button>
+ 
+       {isOpen && (
+-        <div className="fixed bottom-24 right-6 z-[9999] w-80 sm:w-[400px] h-[550px] max-h-[calc(100vh-120px)] bg-bg-surface border border-border-subtle rounded-2xl shadow-pop flex flex-col overflow-hidden animate-slide-up">
+-          <div className="bg-bg-elevated border-b border-border-subtle p-4 flex items-center gap-3">
++        <div className="fixed bottom-24 right-6 z-[9999] w-80 sm:w-[400px] h-[550px] max-h-[calc(100vh-120px)] bg-[#111111]/95 backdrop-blur-2xl border border-white/[0.08] rounded-2xl shadow-pop flex flex-col overflow-hidden animate-slide-up">
++          <div className="bg-[#0d0d0d] border-b border-white/[0.06] p-4 flex items-center gap-3">
+             <div className="h-8 w-8 rounded-full bg-accent/15 flex items-center justify-center">
+               <svg className="w-4 h-4 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+             </div>
+@@ -109,15 +109,15 @@ export default function AssistantBot() {
+             </div>
+           </div>
+ 
+-          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-bg-primary/50">
++          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#0a0a0a]/50">
+             {messages.map((msg) => (
+               <div key={msg.id} className={cn("flex flex-col", msg.role === "user" ? "items-end" : "items-start")}>
+                 <div
+                   className={cn(
+                     "max-w-[85%] rounded-2xl px-4 py-2.5 text-sm whitespace-pre-wrap leading-relaxed",
+                     msg.role === "user"
+-                      ? "bg-border-strong text-text-primary rounded-br-sm"
+-                      : "bg-bg-surface border border-border-subtle text-text-secondary rounded-bl-sm shadow-sm"
++                      ? "bg-[#ff7a00] text-white rounded-br-sm"
++                      : "bg-white/[0.04] border border-white/[0.06] text-[#a1a1aa] rounded-bl-sm shadow-sm"
+                   )}
+                 >
+                   {msg.text}
+@@ -149,7 +149,7 @@ export default function AssistantBot() {
+             <div ref={messagesEndRef} />
+           </div>
+           
+-          <div className="p-3 bg-bg-surface border-t border-border-subtle flex items-center gap-2">
++          <div className="p-3 bg-[#0d0d0d] border-t border-white/[0.06] flex items-center gap-2">
+             <input
+               type="text"
+               value={inputValue}
+@@ -157,7 +157,7 @@ export default function AssistantBot() {
+               onKeyDown={handleKeyDown}
+               disabled={isLoading}
+               placeholder="Type your question..."
+-              className="flex-1 bg-transparent border border-border-subtle rounded-full px-4 py-2 text-sm focus:outline-none focus:border-accent text-text-primary placeholder:text-text-tertiary disabled:opacity-50"
++              className="flex-1 bg-transparent border border-white/[0.08] rounded-full px-4 py-2 text-sm focus:outline-none focus:border-[#ff7a00] text-white placeholder:text-[#5a5a66] disabled:opacity-50"
+             />
+             <button
+               onClick={() => handleSend(inputValue)}
+diff --git a/src/components/community/CommunityPreview.tsx b/src/components/community/CommunityPreview.tsx
+index dffe58f..e773ebf 100644
+--- a/src/components/community/CommunityPreview.tsx
++++ b/src/components/community/CommunityPreview.tsx
+@@ -18,7 +18,7 @@ export function MessageCard({ message }: { message: CommunityMessage }) {
+   return (
+     <div className="flex gap-3 py-3 group">
+       <div
+-        className="shrink-0 h-9 w-9 rounded-full border border-border-subtle bg-bg-surface flex items-center justify-center text-[11px] font-semibold text-accent shadow-card"
++        className="shrink-0 h-9 w-9 rounded-full border border-white/[0.1] bg-white/[0.04] flex items-center justify-center text-[11px] font-semibold text-[#ff7a00] shadow-card"
+         aria-hidden="true"
+       >
+         {message.initials}
+diff --git a/src/components/insights/InsightCards.tsx b/src/components/insights/InsightCards.tsx
+index d6ad9e3..3d55c70 100644
+--- a/src/components/insights/InsightCards.tsx
++++ b/src/components/insights/InsightCards.tsx
+@@ -24,7 +24,7 @@ function InsightCard({ insight, index }: { insight: InsightData; index: number }
+ 
+   return (
+     <div
+-      className="card p-4 min-w-[220px] flex-1 animate-slide-up"
++      className="relative overflow-hidden rounded-xl bg-[#141414]/80 backdrop-blur-md border border-white/[0.06] p-4 min-w-[220px] flex-1 animate-slide-up transition-all duration-200 hover:border-[#ff7a00]/20 hover:shadow-[0_0_20px_rgba(255,122,0,0.05)]"
+       style={{ animationDelay: `${index * 80}ms` }}
+     >
+       <div className="flex items-center justify-between mb-3">
+@@ -37,7 +37,7 @@ function InsightCard({ insight, index }: { insight: InsightData; index: number }
+       </div>
+ 
+       <div className="flex items-baseline gap-2 mb-3">
+-        <span className="font-data text-[26px] font-bold text-text-primary leading-none tracking-tight">
++        <span className="font-data text-[26px] font-bold text-white leading-none tracking-tight">
+           {insight.value}
+         </span>
+         <span className="font-data text-sm text-text-tertiary">{insight.unit}</span>
+@@ -69,7 +69,7 @@ function InsightCard({ insight, index }: { insight: InsightData; index: number }
+ 
+ function InsightSkeleton() {
+   return (
+-    <div className="card p-4 min-w-[220px] flex-1 animate-pulse">
++    <div className="relative overflow-hidden rounded-xl bg-[#141414]/80 backdrop-blur-md border border-white/[0.06] p-4 min-w-[220px] flex-1 animate-pulse">
+       <div className="flex items-center justify-between mb-4">
+         <div className="h-3 w-24 rounded bg-bg-surface-hover" />
+         <div className="h-2 w-2 rounded-full bg-bg-surface-hover" />
+diff --git a/src/components/layout/Footer.tsx b/src/components/layout/Footer.tsx
+index 884846c..7a941a8 100644
+--- a/src/components/layout/Footer.tsx
++++ b/src/components/layout/Footer.tsx
+@@ -11,7 +11,7 @@ const platformLinks = [
+ export default function Footer() {
+   return (
+     <footer
+-      className="border-t border-border-subtle bg-bg-wash"
++      className="border-t border-white/[0.06] bg-[#0a0a0a]"
+       role="contentinfo"
+     >
+       <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8 py-10">
+diff --git a/src/components/layout/Sidebar.tsx b/src/components/layout/Sidebar.tsx
+index ee7f839..8b8429d 100644
+--- a/src/components/layout/Sidebar.tsx
++++ b/src/components/layout/Sidebar.tsx
+@@ -48,21 +48,21 @@ export default function Sidebar({ variant = "default" }: { variant?: "default" |
+ 
+   return (
+     <nav className={cn(
+-      "fixed md:sticky bottom-0 md:top-0 z-[9999] flex md:flex-col items-center justify-between md:h-screen w-full md:w-[76px] transition-colors duration-300 shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)] md:shadow-[4px_0_20px_-10px_rgba(0,0,0,0.1)]",
++      "fixed md:sticky bottom-0 md:top-0 z-[9999] flex md:flex-col items-center justify-between md:h-screen w-full md:w-[76px] transition-colors duration-300",
+       isTransparent
+         ? "bg-transparent border-transparent"
+-        : "bg-bg-primary/95 backdrop-blur-xl md:border-r border-t md:border-t-0 border-border-subtle"
++        : "bg-[#0a0a0a]/95 backdrop-blur-2xl md:border-r border-t md:border-t-0 border-white/[0.06] shadow-[0_-4px_30px_-10px_rgba(0,0,0,0.5)] md:shadow-[4px_0_30px_-10px_rgba(0,0,0,0.4)]"
+     )}>
+       {/* Top / Left Section */}
+       <div className="flex md:flex-col items-center gap-2 md:gap-6 p-2 md:p-5 h-full md:h-auto w-full md:w-auto overflow-x-auto md:overflow-visible no-scrollbar">
+         {/* Logo */}
+-        <Link href="/" className="hidden md:flex items-center justify-center h-10 w-10 shrink-0 group rounded-xl hover:bg-bg-surface-hover transition-colors mb-2">
++        <Link href="/" className="hidden md:flex items-center justify-center h-10 w-10 shrink-0 group rounded-xl hover:bg-white/[0.06] transition-all duration-200 mb-2">
+           <div className="relative h-8 w-8">
+-            <div className="absolute inset-0 rounded-full bg-accent-subtle group-hover:bg-accent-muted transition-colors" />
++            <div className="absolute inset-0 rounded-full bg-[#ff7a00]/10 group-hover:bg-[#ff7a00]/20 transition-colors" />
+             <svg aria-hidden="true" viewBox="0 0 32 32" className="relative h-8 w-8" fill="none">
+-              <path d="M4 20c4-2.5 6-7 8-11 1.5 3.4 4 5.6 8 7.6" stroke="var(--text-primary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+-              <path d="M24 24c-3-1.6-5.4-3.6-7-6.4" stroke="var(--text-primary)" strokeWidth="2.5" strokeLinecap="round" />
+-              <circle cx="13" cy="11" r="2.5" fill="var(--accent)" />
++              <path d="M4 20c4-2.5 6-7 8-11 1.5 3.4 4 5.6 8 7.6" stroke="#f0f0f0" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
++              <path d="M24 24c-3-1.6-5.4-3.6-7-6.4" stroke="#f0f0f0" strokeWidth="2.5" strokeLinecap="round" />
++              <circle cx="13" cy="11" r="2.5" fill="#ff7a00" className="animate-pulse" />
+             </svg>
+           </div>
+         </Link>
+@@ -79,21 +79,21 @@ export default function Sidebar({ variant = "default" }: { variant?: "default" |
+                 aria-label={item.label}
+               >
+                 <div className={cn(
+-                  "p-2.5 rounded-[14px] transition-colors flex items-center justify-center",
++                  "p-2.5 rounded-[14px] transition-all duration-200 flex items-center justify-center",
+                   isActive
+-                    ? "bg-accent text-text-on-accent shadow-sm scale-110"
+-                    : "text-text-secondary group-hover:bg-bg-surface-hover group-hover:text-text-primary"
++                    ? "bg-[#ff7a00] text-white shadow-[0_0_12px_rgba(255,122,0,0.3)] scale-110"
++                    : "text-[#5a5a66] group-hover:bg-white/[0.06] group-hover:text-white"
+                 )}>
+                   {item.icon}
+                 </div>
+                 {/* Tooltip for desktop */}
+-                <span className="absolute left-[calc(100%+8px)] px-2.5 py-1.5 rounded-md bg-text-primary text-bg-primary text-[11px] font-medium tracking-wide whitespace-nowrap opacity-0 md:group-hover:opacity-100 pointer-events-none transition-all duration-200 shadow-md z-50 translate-x-1 group-hover:translate-x-0">
++                <span className="absolute left-[calc(100%+8px)] px-3 py-1.5 rounded-lg bg-[#1c1c1c] text-white text-[11px] font-medium tracking-wide whitespace-nowrap opacity-0 md:group-hover:opacity-100 pointer-events-none transition-all duration-200 shadow-pop z-50 translate-x-1 group-hover:translate-x-0 border border-white/[0.08]">
+                   {item.label}
+                 </span>
+                 {/* Text for mobile */}
+                 <span className={cn(
+                   "text-[10px] mt-1 md:hidden font-medium",
+-                  isActive ? "text-accent" : "text-text-secondary"
++                  isActive ? "text-[#ff7a00]" : "text-[#5a5a66]"
+                 )}>
+                   {item.label}
+                 </span>
+diff --git a/src/components/map/RiskMap.tsx b/src/components/map/RiskMap.tsx
+index a2d2580..b972de0 100644
+--- a/src/components/map/RiskMap.tsx
++++ b/src/components/map/RiskMap.tsx
+@@ -10,6 +10,7 @@ import { useRegion } from "@/state/region-context";
+ import { getRiskZones } from "@/lib/data-client";
+ import { useData } from "@/lib/use-data";
+ import { RISK_COLORS } from "@/lib/risk-colors";
++import { cn } from "@/lib/utils";
+ import type { Region, RiskZoneCollection, RiskZoneFeature, RiskLevel } from "@/data/types";
+ 
+ function getFeatureStyle(feature: RiskZoneFeature) {
+@@ -26,15 +27,15 @@ function getFeatureStyle(feature: RiskZoneFeature) {
+ function onEachFeature(feature: RiskZoneFeature, layer: L.Layer) {
+   const p = feature.properties;
+   const popupContent = `
+-    <div style="min-width: 220px; padding: 4px 0; color: #26211b;">
++    <div style="min-width: 220px; padding: 4px 0; color: #f0f0f0;">
+       <div style="font-family: Georgia, serif; font-size: 16px; font-weight: 600; margin-bottom: 8px;">${p.name}</div>
+-      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; border-bottom: 1px solid #e2d8c6; padding-bottom: 8px;">
++      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px;">
+         <span style="display: inline-block; width: 10px; height: 10px; border-radius: 1px; background: ${RISK_COLORS[p.riskLevel]};" aria-hidden="true"></span>
+         <span style="font-size: 11px; text-transform: uppercase; font-weight: 600; letter-spacing: 0.06em; color: ${RISK_COLORS[p.riskLevel]};">${p.riskLevel}</span>
+-        <span style="font-size: 11px; font-family: monospace; color: #8a7d6e; margin-left: auto;">score ${p.riskScore.toFixed(3)}</span>
++        <span style="font-size: 11px; font-family: monospace; color: #5a5a66; margin-left: auto;">score ${p.riskScore.toFixed(3)}</span>
+       </div>
+-      <div style="font-size: 13px; color: #6a6054; line-height: 1.45; margin-bottom: 6px;"><strong>Driver:</strong> ${p.driver}</div>
+-      <div style="font-size: 13px; color: #6a6054; line-height: 1.45;">${p.description}</div>
++      <div style="font-size: 13px; color: #a1a1aa; line-height: 1.45; margin-bottom: 6px;"><strong style="color: #f0f0f0;">Driver:</strong> ${p.driver}</div>
++      <div style="font-size: 13px; color: #a1a1aa; line-height: 1.45;">${p.description}</div>
+     </div>
+   `;
+   (layer as L.Path).bindPopup(popupContent, {
+@@ -121,6 +122,7 @@ export default function RiskMap({
+   const { data, error } = useData(() => getRiskZones(region.id), [region.id]);
+   const [activeLayer, setActiveLayer] = useState<RiskLayer>("combined");
+   const [visibleLevels, setVisibleLevels] = useState<Set<RiskLevel>>(new Set());
++  const [darkTiles, setDarkTiles] = useState(true);
+ 
+   const levelCounts = useMemo(() => {
+     if (!data) return {} as Record<RiskLevel, number>;
+@@ -146,7 +148,11 @@ export default function RiskMap({
+ 
+   return (
+     <div
+-      className={`relative w-full ${heightClassName} rounded-2xl overflow-hidden border border-border-subtle shadow-card`}
++      className={cn(
++        "relative w-full rounded-2xl overflow-hidden border border-white/[0.06] shadow-card",
++        heightClassName,
++        darkTiles && "dark-map-mode"
++      )}
+     >
+       <MapContainer
+         center={[region.center.lat, region.center.lng]}
+@@ -156,8 +162,10 @@ export default function RiskMap({
+         attributionControl={true}
+       >
+         <TileLayer
++          key={darkTiles ? "dark" : "light"}
+           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+           url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
++          className={darkTiles ? "dark-map-tiles" : ""}
+         />
+         {data && data.features.length > 0 && (
+           <RiskOverlay collection={data} activeLayer={activeLayer} visibleLevels={visibleLevels} />
+@@ -174,14 +182,21 @@ export default function RiskMap({
+         <MapLegend levelCounts={levelCounts} visibleLevels={visibleLevels} onLevelToggle={handleLevelToggle} />
+       </div>
+ 
+-      <div className="absolute top-4 left-4 z-[1000]">
+-        <div className="flex items-center gap-2.5 rounded-lg bg-bg-elevated/90 backdrop-blur-sm border border-border-subtle px-3 py-1.5 shadow-card">
++      <div className="absolute top-4 left-4 z-[1000] flex items-center gap-2">
++        <div className="flex items-center gap-2.5 rounded-lg bg-[#1c1c1c]/90 backdrop-blur-sm border border-white/[0.08] px-3 py-1.5 shadow-card">
+           <span className="relative flex h-2 w-2">
+             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-risk-low opacity-60" />
+             <span className="relative inline-flex rounded-full h-2 w-2 bg-risk-low" />
+           </span>
+-          <span className="font-data text-xs font-medium text-text-primary">{region.name}</span>
++          <span className="font-data text-xs font-medium text-white">{region.name}</span>
+         </div>
++        <button
++          onClick={() => setDarkTiles((prev) => !prev)}
++          className="rounded-lg bg-[#1c1c1c]/90 backdrop-blur-sm border border-white/[0.08] px-2.5 py-1.5 shadow-card text-[10px] font-data font-medium text-[#a1a1aa] hover:text-white transition-colors"
++          aria-label="Toggle map theme"
++        >
++          {darkTiles ? "Light Map" : "Dark Map"}
++        </button>
+       </div>
+ 
+       {error && (
+diff --git a/src/components/risk/RiskScorePanel.tsx b/src/components/risk/RiskScorePanel.tsx
+index 643ca31..b03aafc 100644
+--- a/src/components/risk/RiskScorePanel.tsx
++++ b/src/components/risk/RiskScorePanel.tsx
+@@ -36,7 +36,7 @@ function SummaryBody({ summary }: { summary: RiskSummary }) {
+          <div className={`text-4xl font-bold font-data ${getRiskColorClass(summary.level)} mb-2`}>
+             {summary.score.toFixed(3)}
+          </div>
+-         <div className="eyebrow eyebrow-xs">ML Ranking Score</div>
++         <div className="eyebrow eyebrow-xs">Risk Index Score</div>
+       </div>
+ 
+       <div className="grid grid-cols-2 gap-2.5 mb-4">
+@@ -52,12 +52,12 @@ function SummaryBody({ summary }: { summary: RiskSummary }) {
+         <div className="card-tint p-3">
+           <div className="eyebrow eyebrow-xs mb-1.5">Confidence</div>
+           <div className="flex items-center gap-2">
+-            <span className="font-data text-sm font-semibold text-text-primary">
++            <span className="font-data text-sm font-semibold text-white">
+               {summary.confidence > 80 ? "High" : "Low"}
+             </span>
+-            <div className="flex-1 h-1.5 rounded-full bg-border-subtle overflow-hidden">
++            <div className="flex-1 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+               <div
+-                className="h-full rounded-full bg-accent transition-all duration-1000"
++                className="h-full rounded-full bg-[#ff7a00] transition-all duration-1000"
+                 style={{ width: `${summary.confidence}%` }}
+               />
+             </div>
+@@ -65,7 +65,7 @@ function SummaryBody({ summary }: { summary: RiskSummary }) {
+         </div>
+       </div>
+ 
+-      <div className="border-t border-border-subtle">
++      <div className="border-t border-white/[0.06]">
+         <div className="eyebrow eyebrow-xs mb-2 mt-3">Key risk factors</div>
+         <div className="divide-y divide-border-subtle">
+           {summary.factors.map((factor) => (
+@@ -85,7 +85,7 @@ function SummaryBody({ summary }: { summary: RiskSummary }) {
+         </div>
+       </div>
+ 
+-      <div className="mt-auto pt-3 border-t border-border-subtle">
++      <div className="mt-auto pt-3 border-t border-white/[0.06]">
+         <div className="font-data text-[10px] text-text-tertiary">
+           Updated {new Date(summary.updatedAt).toLocaleTimeString("en-US", { hour12: false })} ·
+           Agent 1 (Risk-Scoring)

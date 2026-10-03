@@ -11,7 +11,7 @@ const platformLinks = [
 export default function Footer() {
   return (
     <footer
-      className="border-t border-border-subtle bg-bg-wash"
+      className="border-t border-white/[0.06] bg-[#0a0a0a]"
       role="contentinfo"
     >
       <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8 py-10">

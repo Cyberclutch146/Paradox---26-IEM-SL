@@ -1,5 +1,8 @@
 import db from "../lib/db";
 import { getMockRegions, getMockRiskZones, getMockAlerts, getMockInsights, getMockCommunity, getMockZoneReports } from "../lib/mock-store";
+if (!db) {
+  throw new Error("Database connection is null");
+}
 
 console.log("Seeding database...");
 
