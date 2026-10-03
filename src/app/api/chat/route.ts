@@ -48,16 +48,41 @@ Keep your responses concise, helpful, and professional. Use markdown. You do not
       parts: [{ text: m.text }]
     }));
 
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: chatMessages,
-      config: {
-        systemInstruction: systemPrompt,
+    const modelsToTry = [
+      process.env.GEMINI_MODEL,
+      "gemini-2.0-flash",
+      "gemini-1.5-flash",
+      "gemini-3.8-flash",
+    ].filter(Boolean) as string[];
+
+    let replyText = "";
+    let lastError: unknown = null;
+
+    for (const model of modelsToTry) {
+      try {
+        const response = await ai.models.generateContent({
+          model,
+          contents: chatMessages,
+          config: {
+            systemInstruction: systemPrompt,
+          },
+        });
+        if (response.text) {
+          replyText = response.text;
+          break;
+        }
+      } catch (err: unknown) {
+        lastError = err;
+        console.warn(`Model ${model} unavailable, trying next fallback...`);
       }
-    });
+    }
+
+    if (!replyText) {
+      throw lastError || new Error("All Gemini model fallbacks exhausted.");
+    }
 
     return NextResponse.json({
-      reply: response.text,
+      reply: replyText,
     });
   } catch (error: any) {
     console.error("Chat API Error:", error);
