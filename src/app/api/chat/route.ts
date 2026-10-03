@@ -1,93 +1,42 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
-import db from "@/lib/db";
+import { answer, sanitiseTurns } from "@/lib/agents/chat-service";
+import type { ChatReply } from "@/lib/agents/types";
 
-const ai = process.env.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY }) : null;
+/**
+ * POST /api/chat — the assistant's backend.
+ *
+ * Body: { messages: { role: "user" | "bot", text: string }[], regionId?: string }
+ * Reply: ChatReply (answer text, the agent steps that produced it, a region to
+ * focus on the map, and follow-up suggestions).
+ *
+ * With GEMINI_API_KEY set, Gemini plans and calls the Orchestrator through
+ * function calling. Without it, the local planner drives the same Orchestrator,
+ * so the assistant always works. GEMINI_MODEL overrides the model name.
+ */
+const apiKey = process.env.GEMINI_API_KEY;
+const gemini = apiKey
+  ? { client: new GoogleGenAI({ apiKey }).models, model: process.env.GEMINI_MODEL || "gemini-2.0-flash" }
+  : null;
 
 export async function POST(request: NextRequest) {
+  let body: { messages?: unknown; regionId?: unknown };
   try {
-    const body = await request.json();
-    const { messages, regionId } = body;
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Body must be JSON" }, { status: 400 });
+  }
 
-    if (!ai) {
-      return NextResponse.json({
-        reply: "To make me 'work proper', please add your `GEMINI_API_KEY` to the `.env.local` file and restart the server! I'm currently running in disconnected mode.",
-      });
-    }
+  const turns = sanitiseTurns(body.messages);
+  const regionId = typeof body.regionId === "string" ? body.regionId : undefined;
 
-    // Fetch context from the database for the LLM (if available)
-    let regionName = "Unknown";
-    let peakZoneStr = "No active monitored zones in this region.";
-
-    if (db) {
-      const regionRow = db.prepare("SELECT name FROM regions WHERE id = ?").get(regionId) as any;
-      regionName = regionRow?.name || "Unknown";
-
-      let query = "SELECT * FROM risk_zones";
-      let params: any[] = [];
-      if (regionId && regionId !== "kerala") {
-        query += " WHERE regionId = ?";
-        params.push(regionId);
-      }
-      const zones = db.prepare(query).all(...params) as any[];
-      
-      if (zones.length > 0) {
-        const peakZone = zones.reduce((prev, curr) => curr.riskScore > prev.riskScore ? curr : prev);
-        peakZoneStr = `Highest Risk Zone: ${peakZone.name}. Tier: ${peakZone.riskLevel.toUpperCase()}. ML Score: ${peakZone.riskScore}. Driver: ${peakZone.driver}. Villages Exposed: ${peakZone.exposureVillages}. Road Km Exposed: ${peakZone.exposureRoadKm}. Confidence Range: ${peakZone.riskRangeMin} to ${peakZone.riskRangeMax}.`;
-      }
-    }
-
-    const systemPrompt = `You are the DistraAI Assistant, a disaster-intelligence ML advisor. 
-You are currently helping a user who is looking at the dashboard for the region: ${regionName}.
-Current ML Data for this region: ${peakZoneStr}
-Keep your responses concise, helpful, and professional. Use markdown. You do not need to repeat the region name unless relevant. Answer the user's questions based on the ML data provided.`;
-
-    // Filter out options and parse messages for Gemini
-    const chatMessages = messages.map((m: any) => ({
-      role: m.role === "bot" ? "model" : "user",
-      parts: [{ text: m.text }]
-    }));
-
-    const modelsToTry = [
-      process.env.GEMINI_MODEL,
-      "gemini-2.0-flash",
-      "gemini-1.5-flash",
-      "gemini-3.8-flash",
-    ].filter(Boolean) as string[];
-
-    let replyText = "";
-    let lastError: unknown = null;
-
-    for (const model of modelsToTry) {
-      try {
-        const response = await ai.models.generateContent({
-          model,
-          contents: chatMessages,
-          config: {
-            systemInstruction: systemPrompt,
-          },
-        });
-        if (response.text) {
-          replyText = response.text;
-          break;
-        }
-      } catch (err: unknown) {
-        lastError = err;
-        console.warn(`Model ${model} unavailable, trying next fallback...`);
-      }
-    }
-
-    if (!replyText) {
-      throw lastError || new Error("All Gemini model fallbacks exhausted.");
-    }
-
-    return NextResponse.json({
-      reply: replyText,
-    });
-  } catch (error: any) {
-    console.error("Chat API Error:", error);
+  try {
+    const reply: ChatReply = await answer(turns, regionId, gemini);
+    return NextResponse.json(reply);
+  } catch (error) {
+    console.error("Chat API error:", error);
     return NextResponse.json(
-      { reply: "I'm sorry, I encountered an error connecting to the AI brain. Please try again." },
+      { reply: "Something went wrong on my side. Please try again.", steps: [], focusRegionId: null, suggestions: [], mode: "local" } satisfies ChatReply,
       { status: 500 }
     );
   }
