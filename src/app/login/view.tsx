@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/state/auth-context";
 import { useRouter } from "next/navigation";
 
@@ -10,15 +10,18 @@ export default function LoginView() {
   const [busy, setBusy] = useState(false);
   const router = useRouter();
 
+  useEffect(() => {
+    if (user) {
+      router.replace("/dashboard");
+    }
+  }, [user, router]);
+
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center text-text-secondary">Loading...</div>;
   }
 
-  // If already signed in, redirect to profile
-  if (user) {
-    router.replace("/profile");
-    return null;
-  }
+  // If already signed in, we render nothing while useEffect redirects
+  if (user) return null;
 
   async function handleSignIn() {
     setBusy(true);

@@ -10,7 +10,7 @@
  * 5. If Gemini is unavailable or errors, the Orchestrator's findings are displayed directly.
  */
 
-import { REGIONS, findRegion, getDefaultRegion } from "@/data/regions";
+import { REGIONS, findRegion } from "@/data/regions";
 import { runOrchestrator } from "./orchestrator";
 import { suggestFollowUps } from "./composer";
 import { detectSpecificPlace } from "./places";
@@ -57,7 +57,7 @@ export async function callRemoteOrchestrator(
         (r) =>
           lowerQuery.includes(r.id.toLowerCase()) ||
           lowerQuery.includes(r.name.toLowerCase())
-      ) || getDefaultRegion();
+      ) || REGIONS[0];
   }
 
   // Calibrated study area coordinates known to the GIS/ML models
@@ -299,7 +299,7 @@ export async function answerWithOrchestrator(
   const userQuery = latestTurn?.text || "What is the current risk status?";
 
   const activeRegionId = dashboardRegionId || "arunachal";
-  const activeRegion = findRegion(activeRegionId) || getDefaultRegion();
+  const activeRegion = findRegion(activeRegionId) || REGIONS[0];
 
   // Check if user is asking about a specific location Y that is NOT the currently selected location X
   const queriedPlace = detectSpecificPlace(userQuery);

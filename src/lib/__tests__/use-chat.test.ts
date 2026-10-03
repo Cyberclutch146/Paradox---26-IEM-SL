@@ -21,6 +21,7 @@ function messageDoc(
     displayName: "Ravi",
     photoURL: null,
     text,
+    regionId: "region-1",
     createdAt: createdAt === null ? null : ts(createdAt),
   });
 }
@@ -33,6 +34,7 @@ describe("toChatMessages", () => {
         displayName: "Anjali",
         photoURL: "https://example.test/a.png",
         text: "Water rising at the bridge",
+        regionId: "region-1",
         createdAt: ts("2026-04-02T10:00:00.000Z"),
       }),
     ]);
@@ -43,6 +45,7 @@ describe("toChatMessages", () => {
       displayName: "Anjali",
       photoURL: "https://example.test/a.png",
       text: "Water rising at the bridge",
+      regionId: "region-1",
       createdAt: new Date("2026-04-02T10:00:00.000Z"),
     });
   });

@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useRegion } from "@/state/region-context";
 import Sidebar from "@/components/layout/Sidebar";
+import LocationSelector from "@/components/layout/LocationSelector";
 import { getAlerts, getRiskZones, getRiskSummary } from "@/lib/data-client";
 import { useData } from "@/lib/use-data";
 import { getRiskColorClass } from "@/lib/utils";
@@ -13,11 +14,10 @@ type Step = "idle" | "query" | "orchestrating" | "agents" | "synthesis" | "compl
 export default function WorkflowView() {
   const [mounted, setMounted] = useState(false);
   const [step, setStep] = useState<Step>("idle");
-  const [query, setQuery] = useState("Draft an alert for Tawang villagers about heavy rainfall");
+  const { region } = useRegion();
+  const [query, setQuery] = useState(`Draft an alert for ${region.name} villagers about heavy rainfall`);
   const [activeAgents, setActiveAgents] = useState<string[]>([]);
   const [output, setOutput] = useState("");
-  
-  const { region } = useRegion();
   
   // Real Data hooks instead of fake sensors
   const alerts = useData(() => getAlerts(region.id), [region.id]);
@@ -25,6 +25,12 @@ export default function WorkflowView() {
   const summary = useData(() => getRiskSummary(region.id), [region.id]);
 
   useEffect(() => setMounted(true), []);
+
+  useEffect(() => {
+    if (step === "idle" || step === "complete") {
+      setQuery(`Draft an alert for ${region.name} villagers about heavy rainfall`);
+    }
+  }, [region.name]);
 
   const handleSimulate = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -107,14 +113,19 @@ export default function WorkflowView() {
       <div className="flex-1 flex flex-col min-w-0 pb-[72px] md:pb-0 h-screen overflow-y-auto">
         
         <main className="px-4 sm:px-8 pb-20 pt-8 max-w-[1400px] mx-auto w-full">
-          <header className="mb-12 mt-8 md:mt-2">
-            <p className="eyebrow mb-3 text-accent">Architecture & Systems</p>
-            <h1 className="serif-display text-4xl sm:text-5xl font-medium tracking-tight mb-4">
-              Intelligence Workflows
-            </h1>
-            <p className="text-text-secondary max-w-2xl text-[15px] leading-relaxed">
-              DistraAI balances deterministic risk evaluation with a multi-agent AI orchestration layer. Test the live API flow or monitor the real deterministic outputs for {region.name} below.
-            </p>
+          <header className="mb-12 mt-8 md:mt-2 flex flex-col md:flex-row md:justify-between md:items-start gap-4">
+            <div className="flex-1">
+              <p className="eyebrow mb-3 text-accent">Architecture & Systems</p>
+              <h1 className="serif-display text-4xl sm:text-5xl font-medium tracking-tight mb-4">
+                Intelligence Workflows
+              </h1>
+              <p className="text-text-secondary max-w-2xl text-[15px] leading-relaxed">
+                DistraAI balances deterministic risk evaluation with a multi-agent AI orchestration layer. Test the live API flow or monitor the real deterministic outputs for {region.name} below.
+              </p>
+            </div>
+            <div className="relative z-[9999] shrink-0 mt-4 md:mt-0">
+              <LocationSelector />
+            </div>
           </header>
 
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
@@ -307,7 +318,7 @@ export default function WorkflowView() {
                    </div>
                    <span className="text-[10px] text-text-tertiary font-data uppercase tracking-widest">{region.name}</span>
                  </h2>
-                 {summary.isLoading ? (
+                 {summary.loading ? (
                    <div className="animate-pulse h-20 bg-bg-surface border border-border-subtle rounded-xl"></div>
                  ) : summary.data ? (
                    <div className="card-tint p-4 border border-border-subtle">
@@ -329,7 +340,7 @@ export default function WorkflowView() {
                {/* Monitored Risk Zones */}
                <div>
                  <h3 className="font-semibold text-[13px] mb-3 text-text-primary">Active Risk Zones (Output)</h3>
-                 {zones.isLoading ? (
+                 {zones.loading ? (
                     <div className="space-y-2">
                       <div className="animate-pulse h-12 bg-bg-surface rounded-xl"></div>
                       <div className="animate-pulse h-12 bg-bg-surface rounded-xl"></div>
@@ -364,7 +375,7 @@ export default function WorkflowView() {
                {/* Active Alerts List */}
                <div>
                  <h3 className="font-semibold text-[13px] mb-3 text-text-primary">System Dispatch Feed</h3>
-                 {alerts.isLoading ? (
+                 {alerts.loading ? (
                     <div className="space-y-2">
                       <div className="animate-pulse h-16 bg-bg-surface rounded-xl"></div>
                       <div className="animate-pulse h-16 bg-bg-surface rounded-xl"></div>
@@ -384,7 +395,7 @@ export default function WorkflowView() {
                              {new Date(alert.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                            </span>
                          </div>
-                         <p className="text-[11px] text-text-primary line-clamp-2 leading-relaxed">{alert.message}</p>
+                         <p className="text-[11px] text-text-primary line-clamp-2 leading-relaxed">{alert.description}</p>
                        </div>
                      ))}
                    </div>

@@ -6,16 +6,17 @@ import { getOrchestratorPrediction } from "@/lib/data-client";
 import { getRiskColorClass } from "@/lib/utils";
 
 export default function MLPredictionPanel() {
-  const { region } = useRegion();
+  const { region, isRegionSet } = useRegion();
   
   const { data, loading, error } = useData(() => {
+    if (!isRegionSet) return Promise.resolve(null);
     return getOrchestratorPrediction({
       regionId: region.id,
       location: { latitude: region.center.lat, longitude: region.center.lng },
       weather: { rain_today_mm: 12, rain_72h_incl_today_mm: 45 },
       soil: { sm_0_7cm_ante: 0.3, sm_0_7cm_change_3d: 0.05 }
     });
-  }, [region.id, region.center.lat, region.center.lng]);
+  }, [region.id, region.center.lat, region.center.lng, isRegionSet]);
 
   return (
     <div className="card-static p-5 animate-fade-in flex flex-col relative overflow-hidden group">

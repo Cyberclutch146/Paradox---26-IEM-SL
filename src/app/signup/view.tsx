@@ -16,7 +16,7 @@ export default function SignupView() {
 
   // If already signed in, redirect to profile
   if (user) {
-    router.replace("/profile");
+    router.replace("/dashboard");
     return null;
   }
 

@@ -14,23 +14,14 @@ import { mockInsights } from "@/data/mockInsights";
 import { mockCommunityMessages } from "@/data/mockCommunity";
 import { computeRiskSummary } from "./risk-summary";
 
-const ALL_REGION_ID = "kerala";
-
 function filterByRegion<T extends { regionId: string }>(items: T[], regionId?: string): T[] {
-  if (!regionId || regionId === ALL_REGION_ID) return items;
-  const filtered = items.filter((item) => item.regionId === regionId);
-  if (filtered.length > 0) return filtered;
-  return items.slice(0, 5).map((item) => ({ ...item, regionId }));
+  if (!regionId) return items;
+  return items.filter((item) => item.regionId === regionId);
 }
 
 function filterZonesByRegion(regionId?: string) {
-  if (!regionId || regionId === ALL_REGION_ID) return mockRiskZones.features;
-  const filtered = mockRiskZones.features.filter((zone) => zone.properties.regionId === regionId);
-  if (filtered.length > 0) return filtered;
-  return mockRiskZones.features.map((zone) => ({
-    ...zone,
-    properties: { ...zone.properties, regionId },
-  }));
+  if (!regionId) return mockRiskZones.features;
+  return mockRiskZones.features.filter((zone) => zone.properties.regionId === regionId);
 }
 
 export function getMockRegions(): Region[] {
@@ -49,7 +40,7 @@ export function getMockRiskZones(regionId?: string): RiskZoneCollection {
 }
 
 export function getMockInsights(regionId?: string): InsightData[] {
-  if (!regionId || regionId === ALL_REGION_ID) return mockInsights;
+  if (!regionId) return mockInsights;
 
   // Simple deterministic hash based on regionId
   const seed = regionId.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);

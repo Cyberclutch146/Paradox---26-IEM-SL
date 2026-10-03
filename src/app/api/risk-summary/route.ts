@@ -17,7 +17,7 @@ export function GET(request: NextRequest) {
     id: regionRow.id,
     name: regionRow.name,
     subLabel: regionRow.subLabel,
-    type: regionRow.id === "kerala" || regionRow.id === "uttarakhand" || regionRow.id === "assam" ? "state" : (regionRow.id === "kochi" || regionRow.id === "mumbai" ? "metro" : "district"),
+    type: "state", // all NE regions are currently states
     center: { lat: regionRow.mapCenterLat, lng: regionRow.mapCenterLng },
     zoom: regionRow.mapZoom,
   } as any;
@@ -25,7 +25,7 @@ export function GET(request: NextRequest) {
   // Get zones
   let query = "SELECT * FROM risk_zones";
   let params: any[] = [];
-  if (regionId !== "kerala") {
+  if (regionId) {
     query += " WHERE regionId = ?";
     params.push(regionId);
   }
