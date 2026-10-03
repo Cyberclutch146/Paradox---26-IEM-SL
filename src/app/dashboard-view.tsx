@@ -40,18 +40,19 @@ function DataCard({
   accent?: boolean;
 }) {
   return (
-    <div className="card-tint px-4 py-3.5 animate-fade-in">
+    <div className="relative overflow-hidden rounded-xl bg-[#141414]/80 backdrop-blur-md border border-white/[0.06] px-4 py-3.5 animate-fade-in">
+      <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#ff7a00]/40 to-transparent" />
       <div className="eyebrow eyebrow-xs mb-1.5">{label}</div>
       <div className="flex items-baseline gap-1.5">
         <span
           className={cn(
             "font-data text-2xl font-bold tracking-tight",
-            accent ? getRiskColorClass("high") : "text-text-primary"
+            accent ? getRiskColorClass("high") : "text-white"
           )}
         >
           {value}
         </span>
-        {subValue && <span className="text-xs text-text-tertiary">{subValue}</span>}
+        {subValue && <span className="text-xs text-[#5a5a66]">{subValue}</span>}
       </div>
     </div>
   );
@@ -142,10 +143,10 @@ export default function DashboardView() {
                   <button 
                     onClick={handleDetectLocation}
                     className={cn(
-                      "flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-accent text-xs font-medium transition-all duration-300",
+                      "flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium transition-all duration-300",
                       isDetecting 
-                        ? "bg-accent text-text-on-accent opacity-80 cursor-wait" 
-                        : "bg-transparent text-accent hover:bg-accent hover:text-text-on-accent shadow-sm hover:shadow-md"
+                        ? "bg-[#ff7a00] text-white border-[#ff7a00] opacity-80 cursor-wait" 
+                        : "bg-transparent text-[#ff7a00] border-[#ff7a00]/40 hover:bg-[#ff7a00] hover:text-white hover:border-[#ff7a00] shadow-sm hover:shadow-[0_0_12px_rgba(255,122,0,0.2)]"
                     )}
                     disabled={isDetecting}
                   >
@@ -269,9 +270,9 @@ export default function DashboardView() {
 
 function SnapshotStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg bg-bg-surface border border-border-subtle px-3 py-2.5">
+    <div className="rounded-lg bg-white/[0.03] border border-white/[0.06] px-3 py-2.5">
       <div className="eyebrow eyebrow-xs mb-1">{label}</div>
-      <div className="font-data text-sm font-semibold text-text-primary truncate">{value}</div>
+      <div className="font-data text-sm font-semibold text-white truncate">{value}</div>
     </div>
   );
 }

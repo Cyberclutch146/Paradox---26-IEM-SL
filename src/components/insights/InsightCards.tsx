@@ -24,7 +24,7 @@ function InsightCard({ insight, index }: { insight: InsightData; index: number }
 
   return (
     <div
-      className="card p-4 min-w-[220px] flex-1 animate-slide-up"
+      className="relative overflow-hidden rounded-xl bg-[#141414]/80 backdrop-blur-md border border-white/[0.06] p-4 min-w-[220px] flex-1 animate-slide-up transition-all duration-200 hover:border-[#ff7a00]/20 hover:shadow-[0_0_20px_rgba(255,122,0,0.05)]"
       style={{ animationDelay: `${index * 80}ms` }}
     >
       <div className="flex items-center justify-between mb-3">
@@ -37,7 +37,7 @@ function InsightCard({ insight, index }: { insight: InsightData; index: number }
       </div>
 
       <div className="flex items-baseline gap-2 mb-3">
-        <span className="font-data text-[26px] font-bold text-text-primary leading-none tracking-tight">
+        <span className="font-data text-[26px] font-bold text-white leading-none tracking-tight">
           {insight.value}
         </span>
         <span className="font-data text-sm text-text-tertiary">{insight.unit}</span>
@@ -69,7 +69,7 @@ function InsightCard({ insight, index }: { insight: InsightData; index: number }
 
 function InsightSkeleton() {
   return (
-    <div className="card p-4 min-w-[220px] flex-1 animate-pulse">
+    <div className="relative overflow-hidden rounded-xl bg-[#141414]/80 backdrop-blur-md border border-white/[0.06] p-4 min-w-[220px] flex-1 animate-pulse">
       <div className="flex items-center justify-between mb-4">
         <div className="h-3 w-24 rounded bg-bg-surface-hover" />
         <div className="h-2 w-2 rounded-full bg-bg-surface-hover" />

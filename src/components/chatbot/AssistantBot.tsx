@@ -98,8 +98,8 @@ export default function AssistantBot() {
       </button>
 
       {isOpen && (
-        <div className="fixed bottom-24 right-6 z-[9999] w-80 sm:w-[400px] h-[550px] max-h-[calc(100vh-120px)] bg-bg-surface border border-border-subtle rounded-2xl shadow-pop flex flex-col overflow-hidden animate-slide-up">
-          <div className="bg-bg-elevated border-b border-border-subtle p-4 flex items-center gap-3">
+        <div className="fixed bottom-24 right-6 z-[9999] w-80 sm:w-[400px] h-[550px] max-h-[calc(100vh-120px)] bg-[#111111]/95 backdrop-blur-2xl border border-white/[0.08] rounded-2xl shadow-pop flex flex-col overflow-hidden animate-slide-up">
+          <div className="bg-[#0d0d0d] border-b border-white/[0.06] p-4 flex items-center gap-3">
             <div className="h-8 w-8 rounded-full bg-accent/15 flex items-center justify-center">
               <svg className="w-4 h-4 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
             </div>
@@ -109,15 +109,15 @@ export default function AssistantBot() {
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-bg-primary/50">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#0a0a0a]/50">
             {messages.map((msg) => (
               <div key={msg.id} className={cn("flex flex-col", msg.role === "user" ? "items-end" : "items-start")}>
                 <div
                   className={cn(
                     "max-w-[85%] rounded-2xl px-4 py-2.5 text-sm whitespace-pre-wrap leading-relaxed",
                     msg.role === "user"
-                      ? "bg-border-strong text-text-primary rounded-br-sm"
-                      : "bg-bg-surface border border-border-subtle text-text-secondary rounded-bl-sm shadow-sm"
+                      ? "bg-[#ff7a00] text-white rounded-br-sm"
+                      : "bg-white/[0.04] border border-white/[0.06] text-[#a1a1aa] rounded-bl-sm shadow-sm"
                   )}
                 >
                   {msg.text}
@@ -149,7 +149,7 @@ export default function AssistantBot() {
             <div ref={messagesEndRef} />
           </div>
           
-          <div className="p-3 bg-bg-surface border-t border-border-subtle flex items-center gap-2">
+          <div className="p-3 bg-[#0d0d0d] border-t border-white/[0.06] flex items-center gap-2">
             <input
               type="text"
               value={inputValue}
@@ -157,7 +157,7 @@ export default function AssistantBot() {
               onKeyDown={handleKeyDown}
               disabled={isLoading}
               placeholder="Type your question..."
-              className="flex-1 bg-transparent border border-border-subtle rounded-full px-4 py-2 text-sm focus:outline-none focus:border-accent text-text-primary placeholder:text-text-tertiary disabled:opacity-50"
+              className="flex-1 bg-transparent border border-white/[0.08] rounded-full px-4 py-2 text-sm focus:outline-none focus:border-[#ff7a00] text-white placeholder:text-[#5a5a66] disabled:opacity-50"
             />
             <button
               onClick={() => handleSend(inputValue)}

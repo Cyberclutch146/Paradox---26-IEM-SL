@@ -18,7 +18,7 @@ export function MessageCard({ message }: { message: CommunityMessage }) {
   return (
     <div className="flex gap-3 py-3 group">
       <div
-        className="shrink-0 h-9 w-9 rounded-full border border-border-subtle bg-bg-surface flex items-center justify-center text-[11px] font-semibold text-accent shadow-card"
+        className="shrink-0 h-9 w-9 rounded-full border border-white/[0.1] bg-white/[0.04] flex items-center justify-center text-[11px] font-semibold text-[#ff7a00] shadow-card"
         aria-hidden="true"
       >
         {message.initials}

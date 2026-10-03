@@ -57,16 +57,6 @@ export default function LandingPage() {
             <span className="font-bold text-xl tracking-tight text-white">DistraAI</span>
           </div>
 
-          <div className="hidden lg:flex items-center gap-8 text-[13px] font-medium text-gray-400">
-            <Link href="#" className="hover:text-white transition-colors">Platform</Link>
-            <Link href="#" className="hover:text-white transition-colors">Risk Models</Link>
-            <Link href="#" className="hover:text-white transition-colors">Live Map</Link>
-            <Link href="#" className="hover:text-white transition-colors">Case Studies</Link>
-            <Link href="#" className="hover:text-white transition-colors">Integrations</Link>
-            <Link href="#" className="hover:text-white transition-colors">API</Link>
-            <Link href="#" className="hover:text-white transition-colors">FAQ</Link>
-          </div>
-
           <div className="flex items-center gap-6 text-sm font-semibold">
             <Link href="/login" className="text-white hover:text-gray-300 transition-colors">Sign in</Link>
             <Link href="/dashboard" className="bg-[#ff7a00] hover:bg-[#e06b00] text-white px-5 py-2.5 rounded-xl transition-all shadow-md hover:shadow-lg">
@@ -98,9 +88,6 @@ export default function LandingPage() {
             <div className="flex flex-col sm:flex-row items-center justify-end gap-4 shrink-0 w-full lg:w-auto mt-6 lg:mt-0">
               <Link href="/dashboard" className="bg-[#ff7a00] hover:bg-[#e06b00] text-white px-7 py-3.5 rounded-xl font-semibold flex items-center gap-2 transition-all shadow-lg hover:shadow-xl text-base border border-transparent whitespace-nowrap">
                 View Live Map <ArrowUpRightIcon />
-              </Link>
-              <Link href="#" className="bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 text-white px-7 py-3.5 rounded-xl font-semibold flex items-center gap-2 transition-all shadow-sm text-base whitespace-nowrap">
-                Documentation <ArrowUpRightIcon />
               </Link>
             </div>
           </div>
@@ -185,65 +172,12 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* FAQ */}
-      <section className="mx-auto max-w-[1200px] w-[95%] py-32 relative z-10 border-t border-gray-200">
-        <div className="grid md:grid-cols-[1fr_2fr] gap-16">
-          <div>
-            <p className="text-[#ff7a00] text-xs font-extrabold tracking-[0.2em] uppercase mb-4">
-              System Capabilities
-            </p>
-            <h2 className="text-4xl sm:text-5xl font-bold tracking-[-0.02em] leading-none text-[#111827]">
-              Understanding<br />the intelligence<br />engine.
-            </h2>
-          </div>
-          <div className="flex flex-col">
-            {[
-              "How is the regional risk score calculated?",
-              "Can we integrate custom hydrological models?",
-              "Is the community reporting channel secure?",
-              "Does the platform support disconnected environments?",
-              "What is the latency of the automated alert pipeline?"
-            ].map((q, i) => (
-              <div key={i} className="border-b border-gray-200 py-6 flex justify-between items-center group cursor-pointer hover:border-gray-400 transition-colors">
-                <span className="text-lg font-bold text-[#111827]">{q}</span>
-                <span className="text-gray-400 text-xl font-medium group-hover:text-gray-900 transition-colors">+</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* Massive Footer */}
       <footer className="bg-[#111827] pt-20 pb-8 px-8 sm:px-16 mt-12 relative z-10 overflow-hidden">
         <div className="flex flex-col md:flex-row justify-between items-start border-b border-gray-800 pb-16 mb-12 relative z-10 mx-auto max-w-[1200px]">
           <div className="flex items-center gap-3 mb-10 md:mb-0">
             <LogoIcon />
             <span className="font-bold text-xl tracking-tight text-white">DistraAI</span>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-12 text-sm">
-            <div className="flex flex-col gap-4">
-              <span className="text-gray-500 font-bold mb-2">Product</span>
-              <a href="#" className="text-gray-300 hover:text-white transition-colors">Platform</a>
-              <a href="#" className="text-gray-300 hover:text-white transition-colors">Integrations</a>
-              <a href="#" className="text-gray-300 hover:text-white transition-colors">Pricing</a>
-            </div>
-            <div className="flex flex-col gap-4">
-              <span className="text-gray-500 font-bold mb-2">Resources</span>
-              <a href="#" className="text-gray-300 hover:text-white transition-colors">Documentation</a>
-              <a href="#" className="text-gray-300 hover:text-white transition-colors">API Reference</a>
-              <a href="#" className="text-gray-300 hover:text-white transition-colors">Support</a>
-            </div>
-            <div className="flex flex-col gap-4">
-              <span className="text-gray-500 font-bold mb-2">Company</span>
-              <a href="#" className="text-gray-300 hover:text-white transition-colors">About</a>
-              <a href="#" className="text-gray-300 hover:text-white transition-colors">Blog</a>
-              <a href="#" className="text-gray-300 hover:text-white transition-colors">Careers</a>
-            </div>
-            <div className="flex flex-col gap-4">
-              <span className="text-gray-500 font-bold mb-2">Legal</span>
-              <a href="#" className="text-gray-300 hover:text-white transition-colors">Privacy</a>
-              <a href="#" className="text-gray-300 hover:text-white transition-colors">Terms</a>
-            </div>
           </div>
         </div>
 
@@ -256,10 +190,6 @@ export default function LandingPage() {
 
         <div className="flex justify-between items-center text-xs font-medium text-gray-600 mt-8 mx-auto max-w-[1200px] relative z-10">
           <p>© 2026 DistraAI Inc.</p>
-          <div className="flex gap-4">
-            <a href="#" className="hover:text-gray-400">Twitter</a>
-            <a href="#" className="hover:text-gray-400">GitHub</a>
-          </div>
         </div>
       </footer>
 

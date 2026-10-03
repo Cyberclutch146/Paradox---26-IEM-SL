@@ -11,18 +11,18 @@ export default function ChatView() {
       <div className="flex-1 flex flex-col min-w-0 pb-[72px] md:pb-0">
 
       <main className="flex-1">
-        <section className="px-4 sm:px-6 lg:px-8 py-6 mx-auto max-w-[1600px]">
-          <div className="max-w-2xl mb-6">
-            <p className="eyebrow mb-1">Real-time</p>
-            <h1 className="serif-display text-3xl sm:text-4xl font-medium tracking-tight">
+        <section className="px-4 sm:px-6 lg:px-8 py-10 mx-auto max-w-4xl w-full flex flex-col items-center">
+          <div className="w-full mb-8 text-center">
+            <p className="eyebrow mb-2">Real-time</p>
+            <h1 className="serif-display text-4xl sm:text-5xl font-medium tracking-tight">
               Community chat
             </h1>
-            <p className="text-sm text-text-secondary mt-1">
-              Live disaster-response chat room. Sign in with Google to participate.
+            <p className="text-[15px] text-text-secondary mt-3">
+              Live disaster-response chat room. Sign in at the landing page to participate.
             </p>
           </div>
 
-          <div className="max-w-3xl">
+          <div className="w-full relative">
             <ChatRoom />
           </div>
         </section>

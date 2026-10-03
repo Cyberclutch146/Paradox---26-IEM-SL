@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
-import { Fraunces, Karla, JetBrains_Mono } from "next/font/google";
+import { Cormorant_Garamond, Karla, JetBrains_Mono } from "next/font/google";
 import { AuthProvider } from "@/state/auth-context";
 import "./globals.css";
 
-const fraunces = Fraunces({
-  variable: "--font-fraunces",
+const cormorant = Cormorant_Garamond({
+  variable: "--font-cormorant",
   subsets: ["latin"],
   display: "swap",
-  axes: ["opsz", "SOFT", "WONK"],
+  weight: ["300", "400", "500", "600", "700"],
 });
 
 const karla = Karla({
@@ -41,7 +41,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="en"
-      className={`${fraunces.variable} ${karla.variable} ${jetbrainsMono.variable} h-full antialiased`}
+      className={`${cormorant.variable} ${karla.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-bg-primary text-text-primary">
         <AuthProvider>

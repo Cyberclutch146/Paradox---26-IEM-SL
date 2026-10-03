@@ -17,40 +17,40 @@
 
 /* ─── Design Tokens ─── */
 :root {
-  /* Canvas — sleek modern white/grey */
-  --bg-primary: #f8f9fa;          
-  --bg-surface: #ffffff;          
-  --bg-surface-hover: #f1f3f5;    
-  --bg-elevated: #ffffff;         
-  --bg-wash: #e9ecef;             
+  /* Canvas — premium dark */
+  --bg-primary: #0d0d0d;
+  --bg-surface: #141414;
+  --bg-surface-hover: #1f1f1f;
+  --bg-elevated: #1c1c1c;
+  --bg-wash: #111111;
 
   /* Rules & hairlines */
-  --border-subtle: #e5e7eb;
-  --border-strong: #d1d5db;
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.15);
   --border-focus: #ff7a00;
 
-  /* Ink */
-  --text-primary: #111827;
-  --text-secondary: #4b5563;
-  --text-tertiary: #9ca3af;
+  /* Ink — light on dark */
+  --text-primary: #f0f0f0;
+  --text-secondary: #a1a1aa;
+  --text-tertiary: #5a5a66;
 
-  /* Risk severity — keeping existing ones but modernized */
-  --risk-low: #10b981;            
-  --risk-watch: #f59e0b;          
-  --risk-warning: #f97316;        
-  --risk-danger: #ef4444;         
+  /* Risk severity — vibrant on dark */
+  --risk-low: #34d399;
+  --risk-watch: #fbbf24;
+  --risk-warning: #fb923c;
+  --risk-danger: #f87171;
 
   /* Accent — vibrant Avento orange */
   --accent: #ff7a00;
   --accent-hover: #e06b00;
-  --accent-muted: #ffe8d6;        
-  --accent-subtle: #fff4ec;       
+  --accent-muted: #3d2200;
+  --accent-subtle: #1a0f00;
   --text-on-accent: #ffffff;
 
-  /* Elevation — two warm-tinted levels, no glow */
-  --shadow-card: 0 1px 2px rgba(88, 72, 56, 0.08);
-  --shadow-card-hover: 0 12px 32px rgba(88, 72, 56, 0.14);
-  --shadow-pop: 0 16px 44px rgba(80, 64, 50, 0.18);
+  /* Elevation — dark shadow levels */
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-card-hover: 0 12px 32px rgba(0, 0, 0, 0.5);
+  --shadow-pop: 0 16px 44px rgba(0, 0, 0, 0.6);
 
   /* Radius */
   --radius-sm: 8px;
@@ -84,7 +84,7 @@
   --color-text-on-accent: var(--text-on-accent);
   --font-sans: var(--font-karla);
   --font-mono: var(--font-jetbrains-mono);
-  --font-display: var(--font-fraunces);
+  --font-display: var(--font-cormorant);
   --shadow-card: var(--shadow-card);
   --shadow-card-hover: var(--shadow-card-hover);
   --shadow-pop: var(--shadow-pop);
@@ -92,7 +92,7 @@
 
 /* ─── Base ─── */
 html {
-  color-scheme: light;
+  color-scheme: dark;
   scroll-behavior: smooth;
 }
 
@@ -105,14 +105,14 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* Subtle paper grain on the canvas only — never on content containers */
+/* Subtle noise grain on dark canvas — very faint */
 body::before {
   content: "";
   position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: 0;
-  opacity: 0.04;
+  opacity: 0.025;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
@@ -137,7 +137,7 @@ body::before {
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background: #b8a98f;
+  background: #555;
 }
 
 /* ─── Typography helpers ─── */
@@ -161,17 +161,16 @@ body::before {
   font-size: 9.5px;
 }
 
-/* Serif display defaults */
+/* Serif display defaults — Cormorant Garamond */
 .serif-display {
-  font-family: var(--font-fraunces), Georgia, serif;
-  font-optical-sizing: auto;
-  font-variation-settings: "opsz" 72, "SOFT" 0;
+  font-family: var(--font-cormorant), Georgia, serif;
+  font-weight: 500;
   text-wrap: balance;
 }
 
 /* Editorial text link — underline, not a chip */
 .link-editorial {
-  font-family: var(--font-fraunces), Georgia, serif;
+  font-family: var(--font-cormorant), Georgia, serif;
   font-size: 1.05em;
   font-weight: 600;
   color: var(--accent);
@@ -208,31 +207,33 @@ body::before {
 }
 
 .card-static {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
+  background: rgba(20, 20, 20, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
 }
 
 /* Contained by tint, not border — the editorial alternative */
 .card-tint {
-  background: var(--bg-wash);
-  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.04);
   border-radius: var(--radius-lg);
 }
 
 .card-glass {
-  background: rgba(255, 253, 248, 0.72);
-  backdrop-filter: blur(10px) saturate(1.1);
-  -webkit-backdrop-filter: blur(10px) saturate(1.1);
-  border: 1px solid var(--border-subtle);
+  background: rgba(30, 30, 30, 0.6);
+  backdrop-filter: blur(16px) saturate(1.2);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: var(--radius-lg);
 }
 
 /* ─── Buttons ─── */
 .btn-primary {
   background: var(--accent);
-  color: #fbf6ee;
+  color: #ffffff;
   font-weight: 600;
   border-radius: var(--radius-pill);
   box-shadow: 0 2px 8px color-mix(in srgb, var(--accent) 30%, transparent);
@@ -394,9 +395,14 @@ body::before {
 }
 
 .leaflet-control-attribution {
-  background: rgba(249, 245, 236, 0.85) !important;
+  background: rgba(13, 13, 13, 0.85) !important;
   color: var(--text-tertiary) !important;
   font-size: 10px !important;
+}
+
+/* CSS trick to create a free dark map from standard OSM tiles */
+.dark-map-mode .leaflet-tile-pane {
+  filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%) saturate(120%);
 }
 
 .leaflet-control-attribution a {
@@ -410,6 +416,6 @@ body::before {
 }
 
 ::selection {
-  background: var(--accent-muted);
-  color: var(--text-primary);
+  background: var(--accent);
+  color: #ffffff;
 }
