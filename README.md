@@ -200,6 +200,10 @@ The platform establishes three segregated data channels:
    Chatbox → /api/chat → orchestrator-bridge.ts → Remote Orchestrator (/predict)
    ```
    Live inference queries the remote ML orchestrator. When active, its multi-agent findings (GIS parcels, scenario calculations, operational recommendations) drive chat answers directly.
+   
+   **Built-in Guardrails**:
+   - **Domain Relevance Guard**: Non-disaster or irrelevant questions (trivia, general coding, sports, chit-chat) are intercepted immediately and returned with a standardized pre-recorded advisory without exhausting remote model compute.
+   - **Location Mismatch Guard**: Asking about an unselected region (e.g. asking about Mumbai while Arunachal is active) prompts the responder with a direct 1-click location synchronization link.
 
 3. **Realtime Responder Collaboration** (`/chat` only):
    ```
