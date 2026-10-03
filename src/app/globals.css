@@ -1,0 +1,418 @@
+@import "tailwindcss";
+
+/* ────────────────────────────────────────────────────────────
+   DistraAI — "Field Dispatch" design system
+   Warm editorial / craft. Light parchment canvas, ink text,
+   one terracotta accent, serif display + humanist body + mono data.
+
+   Rationale (design intent, not just values):
+   - Paper palette signals care + human craft — the opposite of the
+     sterile dark "AI dashboard" template.
+   - Risk colors are earthy and semantically unique (moss/ochre/
+     burnt orange/deep red) so alerts read as field warnings, not UI chrome.
+   - Accent terracotta is treated as a wax seal: CTAs, links, active
+     states only. Never decoration, never a gradient.
+   - Rules (hairlines) and tinted containment replace shadows/blur/glass.
+   ──────────────────────────────────────────────────────────── */
+
+/* ─── Design Tokens ─── */
+:root {
+  /* Canvas — warm paper stack (never pure white) */
+  --bg-primary: #f9f5ec;          /* parchment canvas */
+  --bg-surface: #fdfbf6;          /* raised paper / cards */
+  --bg-surface-hover: #f2ebdd;    /* pressed / hover paper */
+  --bg-elevated: #fffdf8;         /* floating surfaces (dropdowns, popovers) */
+  --bg-wash: #f4eee1;             /* alternate section tone */
+
+  /* Rules & hairlines — warm, not cool grey */
+  --border-subtle: #e2d8c6;
+  --border-strong: #cfc2ac;
+  --border-focus: #b05a36;
+
+  /* Ink — warm, not pure black/white */
+  --text-primary: #26211b;
+  --text-secondary: #6a6054;
+  --text-tertiary: #8a7d6e;
+
+  /* Risk severity — reserved ONLY for risk indicators.
+     Earthy semantic colors: field warnings, not contextless palette. */
+  --risk-low: #5b8049;            /* moss */
+  --risk-watch: #b8892a;          /* ochre */
+  --risk-warning: #c4512c;        /* burnt orange */
+  --risk-danger: #a0281b;         /* deep red */
+
+  /* Accent — terracotta wax seal */
+  --accent: #b05a36;
+  --accent-hover: #96492b;
+  --accent-muted: #e8d2c4;        /* soft tint for active states */
+  --accent-subtle: #f6eae0;       /* faint wash */
+  /* Ink for text sitting ON the accent fill (buttons, bubbles, monograms).
+     Warm off-white, never pure #fff, to keep the paper cast. */
+  --text-on-accent: #fbf6ee;
+
+  /* Elevation — two warm-tinted levels, no glow */
+  --shadow-card: 0 1px 2px rgba(88, 72, 56, 0.08);
+  --shadow-card-hover: 0 12px 32px rgba(88, 72, 56, 0.14);
+  --shadow-pop: 0 16px 44px rgba(80, 64, 50, 0.18);
+
+  /* Radius */
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-pill: 999px;
+}
+
+/* ─── Tailwind Theme Integration ─── */
+@theme inline {
+  --color-bg-primary: var(--bg-primary);
+  --color-bg-surface: var(--bg-surface);
+  --color-bg-surface-hover: var(--bg-surface-hover);
+  --color-bg-elevated: var(--bg-elevated);
+  --color-bg-wash: var(--bg-wash);
+  --color-border-subtle: var(--border-subtle);
+  --color-border-strong: var(--border-strong);
+  --color-border-focus: var(--border-focus);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+  --color-risk-low: var(--risk-low);
+  --color-risk-watch: var(--risk-watch);
+  --color-risk-warning: var(--risk-warning);
+  --color-risk-danger: var(--risk-danger);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-muted: var(--accent-muted);
+  --color-accent-subtle: var(--accent-subtle);
+  --color-text-on-accent: var(--text-on-accent);
+  --font-sans: var(--font-karla);
+  --font-mono: var(--font-jetbrains-mono);
+  --font-display: var(--font-fraunces);
+  --shadow-card: var(--shadow-card);
+  --shadow-card-hover: var(--shadow-card-hover);
+  --shadow-pop: var(--shadow-pop);
+}
+
+/* ─── Base ─── */
+html {
+  color-scheme: light;
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-karla), ui-sans-serif, system-ui, sans-serif;
+  font-feature-settings: "kern", "liga";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Subtle paper grain on the canvas only — never on content containers */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ─── Scrollbar — subtle warm ─── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 3px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: #b8a98f;
+}
+
+/* ─── Typography helpers ─── */
+.font-data {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* Small-caps eyebrow labels — editorial byline voice */
+.eyebrow {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+.eyebrow-xs {
+  font-size: 9.5px;
+}
+
+/* Serif display defaults */
+.serif-display {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-optical-sizing: auto;
+  font-variation-settings: "opsz" 72, "SOFT" 0;
+  text-wrap: balance;
+}
+
+/* Editorial text link — underline, not a chip */
+.link-editorial {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-size: 1.05em;
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--accent) 40%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+  transition: color 160ms ease, text-decoration-color 160ms ease;
+}
+
+.link-editorial:hover {
+  color: var(--accent-hover);
+  text-decoration-color: var(--accent);
+}
+
+/* Legacy gradient text → solid accent seal */
+.text-gradient {
+  color: var(--accent);
+}
+
+/* ─── Card system — soft containment over hard borders ─── */
+.card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  transition: transform 200ms cubic-bezier(0.22, 0.61, 0.36, 1), box-shadow 200ms ease, border-color 200ms ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card-hover);
+  border-color: var(--border-strong);
+}
+
+.card-static {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+/* Contained by tint, not border — the editorial alternative */
+.card-tint {
+  background: var(--bg-wash);
+  border: 1px solid transparent;
+  border-radius: var(--radius-lg);
+}
+
+.card-glass {
+  background: rgba(255, 253, 248, 0.72);
+  backdrop-filter: blur(10px) saturate(1.1);
+  -webkit-backdrop-filter: blur(10px) saturate(1.1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+}
+
+/* ─── Buttons ─── */
+.btn-primary {
+  background: var(--accent);
+  color: #fbf6ee;
+  font-weight: 600;
+  border-radius: var(--radius-pill);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--accent) 30%, transparent);
+  transition: background 160ms ease, box-shadow 160ms ease;
+}
+
+.btn-primary:hover {
+  background: var(--accent-hover);
+  box-shadow: 0 3px 12px color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  transition: all 160ms ease;
+}
+
+.btn-ghost:hover {
+  background: var(--bg-surface-hover);
+  color: var(--text-primary);
+  border-color: var(--text-tertiary);
+}
+
+/* Small accent control (tabs, filters) */
+.btn-soft {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  transition: all 160ms ease;
+}
+
+.btn-soft:hover {
+  color: var(--text-primary);
+  background: var(--bg-surface-hover);
+}
+
+/* ─── Section rule — hairline index ─── */
+.index-rule {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.index-rule::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border-subtle);
+}
+
+/* ─── Animations — reading-aware, gentle ─── */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes clip-reveal {
+  from {
+    opacity: 0;
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    opacity: 1;
+    clip-path: inset(0 0% 0 0);
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.45s ease-out forwards;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.5s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+}
+
+.animate-clip-reveal {
+  animation: clip-reveal 0.7s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.5s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ─── Paper grid pattern (maps / hero) ─── */
+.grid-pattern {
+  background-image:
+    linear-gradient(var(--border-subtle) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border-subtle) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, black 20%, transparent 75%);
+}
+
+/* ─── Leaflet overrides for warm light theme ─── */
+.leaflet-container {
+  background: var(--bg-surface) !important;
+  font-family: var(--font-karla), sans-serif !important;
+}
+
+.leaflet-popup-content-wrapper {
+  background: var(--bg-elevated) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md) !important;
+  box-shadow: var(--shadow-pop) !important;
+}
+
+.leaflet-popup-tip {
+  background: var(--bg-elevated) !important;
+}
+
+.leaflet-popup-close-button {
+  color: var(--text-tertiary) !important;
+}
+
+.leaflet-control-zoom a {
+  background: var(--bg-surface) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-subtle) !important;
+}
+
+.leaflet-control-zoom a:hover {
+  background: var(--bg-surface-hover) !important;
+}
+
+.leaflet-control-attribution {
+  background: rgba(249, 245, 236, 0.85) !important;
+  color: var(--text-tertiary) !important;
+  font-size: 10px !important;
+}
+
+.leaflet-control-attribution a {
+  color: var(--text-secondary) !important;
+}
+
+/* ─── Focus & selection ─── */
+:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--accent-muted);
+  color: var(--text-primary);
+}

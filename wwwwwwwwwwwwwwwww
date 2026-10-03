@@ -1,0 +1,210 @@
+# Satellite/GIS Agent: full context, findings and plan
+
+*Project: AI Landslide Early Warning Platform for North East India (SIH 2026, SIH26001, MDoNER). This document covers Agent 3 of 4. Companion document: the Risk-Scoring Agent briefing.*
+
+---
+
+## 1. What this agent is for
+
+The Risk-Scoring Agent produces numbers. The GIS agent gives those numbers **a place, a terrain and a map**. Per the PRD it has two jobs:
+
+1. **Derive the terrain and land-cover layers** (slope, elevation relief, vegetation change) from satellite elevation data and imagery.
+2. **Provide the spatial backbone for the map**: the zone polygons, the colour-coded risk, the roads and villages, and the pins for confirmed community reports.
+
+In the current split of work, **we build the agent (the data, the calculations, the files, the documentation) and a teammate builds the visual map** that consumes it.
+
+Most of the work is preprocessing done once, not a live model. That is normal for this agent, and the pitch should describe it as the *spatial visibility layer* that makes the other three agents usable, not as another trained model.
+
+---
+
+## 2. What we found out (the Copernicus 30 m validation)
+
+This is the most important result so far, because the Risk model was trained on terrain numbers, and the GIS agent must produce **the same numbers** for live scoring.
+
+### 2.1 How the training terrain was defined (reverse-engineered by Opus from the training data)
+
+- **A "zone" is a fixed grid cell about 1 km across** (0.0089831117° on each side; roughly 995 m north-south and 884 to 922 m east-west).
+- **Zone ID is `i_j`** (row_column in the grid). The zone centre is:
+  - latitude = 21.5174519446 + 0.0089831117 × i
+  - longitude = 89.5683187273 + 0.0089831117 × j
+  - the zone box is the centre ± half a step.
+- A DEM pixel belongs to a zone if the pixel's **centre lies inside the box**. That gives 32×32, 32×33 or 33×33 pixels (1024, 1056 or 1089), which matches the training table exactly.
+- The two terrain features are **`mean_slope`** (degrees, averaged over the zone's pixels) and **`elevation_range`** (highest minus lowest elevation in the zone, metres).
+- `zones_reference.csv` lists every zone in the training data with its terrain, box corners and centre. It has **12,032 zones** across 7 states (Assam 3,258; Manipur 2,145; Meghalaya 1,723; Mizoram 1,517; Arunachal Pradesh 1,444; Nagaland 1,055; Tripura 890). 55 of them contain the 57 landslides.
+
+### 2.2 The validation run on Kaggle
+
+We recomputed terrain from the Copernicus GLO-30 tiles (streamed from the public AWS bucket) for 112 zones (all 55 landslide zones, 22 zones whose slope was interpolated in training, 15 water zones and 20 random zones) and compared with the training values.
+
+| Check | Result |
+|---|---|
+| Pixel counts reproduced | **100%**, with pixel centres exactly as stored in the tile (no half-pixel shift needed; a shifted grid matched only 16 of 30) |
+| Elevation (mean / min / max) | error 0.000 / 0.006 / 0.002 m, correlation 1.000 |
+| `elevation_range` | error 0.01 m, **MATCH** |
+| `mean_slope`, Horn method with **fixed 30 m pixels** | correlation 0.9998, error **0.22°**, bias 0.00°, **MATCH** |
+| `mean_slope`, Horn with true (ellipsoid) pixel sizes | error 0.37°, bias +0.27°, MATCH |
+| `mean_slope`, Horn ignoring latitude scaling | error 0.30°, bias -0.30°, OK |
+| `mean_slope`, central-difference | error 0.64°, bias +0.64°, MISMATCH |
+| Water zones | training range 0; recomputed max 0.50 m and slope 0.00° |
+| The 22 interpolated zones | 1.54° mean difference, expected (their training slopes were interpolated, not computed) |
+| Zones skipped (missing tile / error) | 0 of 112 |
+
+### 2.3 What this means
+
+1. **The training DEM is Copernicus GLO-30**, and the tiles in the public AWS bucket reproduce it to millimetres. We should use those same tiles.
+2. **The zone definition is confirmed.** The geometry rules above are correct.
+3. **We do not need to recompute terrain and retrain the Risk model.** The fallback plan (recompute for all zones and retrain) is not needed.
+4. **Official slope method for the agent: Horn stencil, 30 m fixed pixel size.** It reproduces the training values with zero bias. It is a physical shortcut (real pixels at 25°N are about 28 m east-west and 31 m north-south), but consistency with training matters more here. We should say we reproduce training terrain to within about 0.2° of slope, and **not** claim to know the original algorithm exactly.
+5. Copernicus is a **surface** model (it includes tree canopy and buildings), so slope in dense forest carries some noise. This is fine for now and belongs in the limitations list.
+
+### 2.4 Caveats on the result
+
+- The random part of the sample was only 20 zones. **Rerun with 200** (`N_RANDOM = 200`, about a minute) to confirm the slope choice on typical terrain.
+- Water zones can come out as 0.5 m rather than exactly 0 m. Negligible for the model, but do not promise exactly 0.
+
+---
+
+## 3. Coverage: something to know before we promise a map
+
+From the Opus report on the training data:
+
+- Weather in the training table comes from **7 state capitals**. Each zone uses its nearest capital, and the study includes only zones **within about 100 km** of one.
+- So the model has only experience of zones **near those 7 capitals**. Large parts of the region (and all of Sikkim) are outside what it has seen.
+- `zones_reference.csv` lists only the **12,032 zones that appear in the training table**. That is a sample of the area, not every grid cell near the capitals. Covering all of it would need many times more zones, and terrain for each.
+
+**Consequences for us**
+- For the demo, pick **one or two districts near a capital** and compute terrain for every grid cell there (using the zone formula above), instead of relying on the sampled 12,032.
+- Do not draw risk for areas beyond about 100 km from a capital, and do not draw Sikkim.
+- 12,000 polygons in Leaflet is heavy. Render only the chosen districts, or use a canvas renderer.
+
+---
+
+## 4. What the GIS agent needs (inputs) and produces (outputs)
+
+**Needs**
+- Copernicus GLO-30 tiles for the chosen area (public AWS bucket; internet on in Kaggle)
+- Sentinel-2 imagery for two comparable periods (Planetary Computer or Earth Engine), for the land-cover layer
+- District boundaries (for example GADM level 2) and OpenStreetMap roads/villages, for exposure and place names
+- The zone geometry rules and `zones_reference.csv` (already in hand)
+
+**Produces**
+
+| Output | Contents | Used by |
+|---|---|---|
+| `terrain_zones.csv` | `zone_id`, `mean_slope`, `elevation_range` (plus max slope and elevation stats) for every zone we serve | Risk Agent (features) |
+| `zones.geojson` | Zone polygons (WGS84 lat/lon) with terrain, `veg_loss_pct`, `vuln_index`, `vuln_class`, `district`, place name | Map, Alert Agent |
+| Raster overlays | Slope and vegetation-change images as PNGs, with a `bounds.json` giving their coordinates | Map |
+| `exposure` fields or file | Per zone: villages/settlements and road length inside it | Alert Agent, map |
+| `provenance.json` | Data sources, dates, resolution, what is derived and what is simulated | Everyone (PRD requires this) |
+| `gis_agent.py` | The functions that recompute or fetch all of the above | Backend |
+| README | How to use it (Section 8) | Teammate |
+
+---
+
+## 5. What we have to do now (in order)
+
+**Step 1. Lock the method (short).** Rerun the validation with `N_RANDOM = 200`. If Horn/fixed 30 m stays a MATCH, record it as the official method in the code and the docs.
+
+**Step 2. Build the terrain engine.** A function that takes a zone (or a list) and returns `mean_slope` and `elevation_range` using the validated method. Reuse the tested code from `validate_terrain_kaggle.py`. Run it once over all 12,032 training zones (roughly 15 to 20 minutes at the speed we saw) and save `terrain_zones.csv`. Then check it against `zones_reference.csv` for every zone, not just 112. That table is our proof that the agent is trustworthy.
+
+**Step 3. Serve the demo area.** Choose the districts. Generate every grid cell there from the zone formula and compute terrain for them. If this covers many zones, compute the slope for the whole tile once and aggregate per cell, which is much faster than reading tiles zone by zone.
+
+**Step 4. Export `zones.geojson`.** Build polygons from the box corners (`lat_min`, `lat_max`, `lon_min`, `lon_max` in `zones_reference.csv`, or from the formula for new zones). Include terrain and IDs. Agree with the teammate on the exact property names.
+
+**Step 5. Add district and place names.** Match each zone centre to a district (point-in-polygon with a boundary file) and to the nearest village or town from OpenStreetMap. Alerts must say a place people recognize, not "zone 198_224". This is the piece the Alert Agent most needs from us.
+
+**Step 6. Exposure.** Count villages and road length inside each zone (OpenStreetMap). This lets an alert say what is at risk.
+
+**Step 7. Land-cover change (one or two districts is enough).** Compare vegetation greenness (NDVI) from Sentinel-2 for the same season in two years, and summarize the loss per zone as `veg_loss_pct`. Monsoon cloud is the main problem, so use dry-season (roughly November to March) composites with cloud masking.
+
+**Step 8. Vulnerability index.** A simple, transparent score from slope, elevation relief and vegetation loss, split into Low, Moderate and High. Do **not** train a model for it: with 55 landslide zones it would be weak and hard to defend. Label it a *susceptibility index, not a prediction*. Sanity-check that the 55 landslide zones score higher than random zones, but avoid tuning the weights to those events.
+
+**Step 9. Package and document.** `gis_agent.py`, `provenance.json`, the README for the teammate, and a short list of limitations.
+
+**Step 10. Integration test with the Risk Agent** (Section 6).
+
+**Minimum viable version if time is short:** Steps 1, 2, 4 and 9 alone give the Risk Agent correct terrain and the teammate a working GeoJSON. Step 5 (place names) is the next most valuable. Land cover and the index make it look like a full GIS agent and can come last.
+
+---
+
+## 6. How it works with the Risk-Scoring Agent
+
+**The shared key is `zone_id`.** Every file above is keyed by it.
+
+```
+Rain + soil moisture feed (per capital weather point)
+              |
+              v
+   RISK-SCORING AGENT  <----  terrain (mean_slope, elevation_range) from the GIS agent
+              |
+     per-zone risk, range, tier, driver
+              |
+              v
+     Orchestrator (fuses with community reports)
+              |
+      +-------+---------+
+      v                 v
+   MAP (polygons      ALERT AGENT (place names,
+   coloured by         districts, exposure)
+   tier + range)
+```
+
+**What each side gives the other**
+- **GIS to Risk:** the two terrain features per zone. The Risk model expects 10 inputs in a fixed order: rain today, rain over 72 hours (including today), rain in the 7 days before, rain in the 30 days before, soil moisture before, soil-moisture change over 3 days, season (two numbers), then `mean_slope` and `elevation_range`. The last two must come from us and must match training, which is why the validation mattered.
+- **Risk to GIS/map:** a score, a range, a tier and a driver per `zone_id`, used to colour the polygons. The range should be drawn (for example as a gradient or a hatch) so "confident high" looks different from "uncertain but possibly high", as the PRD requires.
+
+**Watch-outs**
+- The Risk score is small (about 0.003 to 0.013) and is a ranking score, not a probability. The map should colour by **tier**, not by the raw number.
+- Rain data is per capital, so neighbouring zones under the same capital change colour together when rain changes. Only terrain separates them. That is expected and worth one sentence in the demo so it doesn't look like a bug.
+- The Risk model has never seen zones outside the training area, or much steeper or higher terrain than in its training zones. Only serve areas we have justification for.
+
+---
+
+## 7. How it contributes to a landslide alert
+
+The PRD says every alert must carry the risk score, a confidence range, a one-line driving factor and, where relevant, a corroboration count. The Risk and Community agents supply those. **The GIS agent supplies the "where" and the "what's at stake"**:
+
+1. **Where:** a real place name and district for a zone, so the alert is readable by villagers and officials, and so the Alert Agent can route it to the right district administration and community.
+2. **What is exposed:** how many villages and how much road lie in the risky zone, so an alert can say more than "high risk".
+3. **Why the ground is vulnerable:** steepness, relief and, where available, vegetation loss, as context for the driver line.
+4. **The map itself:** a picture of the risk zones, with confirmed community reports as pins, for the district and authority dashboards. The offline-cached copy of the last map (FR-12) also comes from here.
+
+**An illustrative alert** (exact wording belongs to the Alert Agent):
+
+> *District X, near Village Y: WARNING. Landslide risk is high today (range: moderate to high). Main cause: heavy rain over the last 3 days on steep ground. 2 community reports confirmed. About 3 villages and 4 km of road lie in the affected area.*
+
+Every element in that message maps to an agent: risk and range (Risk), cause (Risk), reports (Community), place, villages and roads (GIS), wording and translation (Alert).
+
+---
+
+## 8. Handoff to the map builder: what the README must say
+
+1. What the agent does, in two sentences.
+2. The files and every property in them, with units (slope in degrees, relief in metres).
+3. The join key (`zone_id`) and how it links to the Risk Agent's output.
+4. The coordinate system (WGS84 lat/lon, what Leaflet expects) and how to place the overlay PNGs using `bounds.json`.
+5. Colour and legend conventions for tiers, plus how to show the range.
+6. Limitations: coverage area, imagery dates, susceptibility index is not a probability.
+7. How to regenerate the files for a new area.
+
+---
+
+## 9. Risks and open questions
+
+| Item | Why it matters | What to do |
+|---|---|---|
+| Original slope algorithm unknown | We match within 0.2° but cannot claim it is identical | State it plainly in the docs |
+| Surface model includes canopy | Slope in forest is noisy | List under limitations |
+| Coverage limited to areas near 7 capitals | Model has no basis elsewhere | Restrict the map; do not show Sikkim |
+| Only 20 random zones in the first run | Slope choice not confirmed on typical terrain | Rerun with 200 |
+| 22 zones have interpolated training slope | Their training values are less reliable | Prefer DEM values for them going forward |
+| Data provenance not yet written down | The PRD requires it | Fill `provenance.json` early, including which data is real or simulated |
+| Land cover is not a model input | It can only appear on the map for now | Say so; retraining with it is a future extension |
+| Cloud cover in Sentinel imagery | Monsoon gaps | Use dry-season composites |
+| Which Copernicus release | Release differences would be tiny | We matched the AWS bucket to millimetres, so use that source |
+
+---
+
+## 10. Files we already have
+
+`gis_terrain_report.md` (Opus's findings), `zones_reference.csv` (12,032 zones), `validate_terrain_kaggle.py` (validated script), `validation_results.csv` (output of the Kaggle run), plus, from the wider team, `dem_zones.csv` and `build_training_data.py`, which Opus used.
