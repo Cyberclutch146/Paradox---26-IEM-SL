@@ -10,6 +10,7 @@ import { useRegion } from "@/state/region-context";
 import { getRiskZones } from "@/lib/data-client";
 import { useData } from "@/lib/use-data";
 import { RISK_COLORS } from "@/lib/risk-colors";
+import { cn } from "@/lib/utils";
 import type { Region, RiskZoneCollection, RiskZoneFeature, RiskLevel } from "@/data/types";
 
 function getFeatureStyle(feature: RiskZoneFeature) {
@@ -26,15 +27,15 @@ function getFeatureStyle(feature: RiskZoneFeature) {
 function onEachFeature(feature: RiskZoneFeature, layer: L.Layer) {
   const p = feature.properties;
   const popupContent = `
-    <div style="min-width: 220px; padding: 4px 0; color: #26211b;">
+    <div style="min-width: 220px; padding: 4px 0; color: #f0f0f0;">
       <div style="font-family: Georgia, serif; font-size: 16px; font-weight: 600; margin-bottom: 8px;">${p.name}</div>
-      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; border-bottom: 1px solid #e2d8c6; padding-bottom: 8px;">
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px;">
         <span style="display: inline-block; width: 10px; height: 10px; border-radius: 1px; background: ${RISK_COLORS[p.riskLevel]};" aria-hidden="true"></span>
         <span style="font-size: 11px; text-transform: uppercase; font-weight: 600; letter-spacing: 0.06em; color: ${RISK_COLORS[p.riskLevel]};">${p.riskLevel}</span>
-        <span style="font-size: 11px; font-family: monospace; color: #8a7d6e; margin-left: auto;">score ${p.riskScore.toFixed(3)}</span>
+        <span style="font-size: 11px; font-family: monospace; color: #5a5a66; margin-left: auto;">score ${p.riskScore.toFixed(3)}</span>
       </div>
-      <div style="font-size: 13px; color: #6a6054; line-height: 1.45; margin-bottom: 6px;"><strong>Driver:</strong> ${p.driver}</div>
-      <div style="font-size: 13px; color: #6a6054; line-height: 1.45;">${p.description}</div>
+      <div style="font-size: 13px; color: #a1a1aa; line-height: 1.45; margin-bottom: 6px;"><strong style="color: #f0f0f0;">Driver:</strong> ${p.driver}</div>
+      <div style="font-size: 13px; color: #a1a1aa; line-height: 1.45;">${p.description}</div>
     </div>
   `;
   (layer as L.Path).bindPopup(popupContent, {
@@ -121,6 +122,7 @@ export default function RiskMap({
   const { data, error } = useData(() => getRiskZones(region.id), [region.id]);
   const [activeLayer, setActiveLayer] = useState<RiskLayer>("combined");
   const [visibleLevels, setVisibleLevels] = useState<Set<RiskLevel>>(new Set());
+  const [darkTiles, setDarkTiles] = useState(true);
 
   const levelCounts = useMemo(() => {
     if (!data) return {} as Record<RiskLevel, number>;
@@ -146,7 +148,11 @@ export default function RiskMap({
 
   return (
     <div
-      className={`relative w-full ${heightClassName} rounded-2xl overflow-hidden border border-border-subtle shadow-card`}
+      className={cn(
+        "relative w-full rounded-2xl overflow-hidden border border-white/[0.06] shadow-card",
+        heightClassName,
+        darkTiles && "dark-map-mode"
+      )}
     >
       <MapContainer
         center={[region.center.lat, region.center.lng]}
@@ -156,8 +162,10 @@ export default function RiskMap({
         attributionControl={true}
       >
         <TileLayer
+          key={darkTiles ? "dark" : "light"}
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+          className={darkTiles ? "dark-map-tiles" : ""}
         />
         {data && data.features.length > 0 && (
           <RiskOverlay collection={data} activeLayer={activeLayer} visibleLevels={visibleLevels} />
@@ -174,14 +182,21 @@ export default function RiskMap({
         <MapLegend levelCounts={levelCounts} visibleLevels={visibleLevels} onLevelToggle={handleLevelToggle} />
       </div>
 
-      <div className="absolute top-4 left-4 z-[1000]">
-        <div className="flex items-center gap-2.5 rounded-lg bg-bg-elevated/90 backdrop-blur-sm border border-border-subtle px-3 py-1.5 shadow-card">
+      <div className="absolute top-4 left-4 z-[1000] flex items-center gap-2">
+        <div className="flex items-center gap-2.5 rounded-lg bg-[#1c1c1c]/90 backdrop-blur-sm border border-white/[0.08] px-3 py-1.5 shadow-card">
           <span className="relative flex h-2 w-2">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-risk-low opacity-60" />
             <span className="relative inline-flex rounded-full h-2 w-2 bg-risk-low" />
           </span>
-          <span className="font-data text-xs font-medium text-text-primary">{region.name}</span>
+          <span className="font-data text-xs font-medium text-white">{region.name}</span>
         </div>
+        <button
+          onClick={() => setDarkTiles((prev) => !prev)}
+          className="rounded-lg bg-[#1c1c1c]/90 backdrop-blur-sm border border-white/[0.08] px-2.5 py-1.5 shadow-card text-[10px] font-data font-medium text-[#a1a1aa] hover:text-white transition-colors"
+          aria-label="Toggle map theme"
+        >
+          {darkTiles ? "Light Map" : "Dark Map"}
+        </button>
       </div>
 
       {error && (

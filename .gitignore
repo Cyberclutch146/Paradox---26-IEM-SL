@@ -38,6 +38,9 @@ next-env.d.ts
 *.swp
 *.swo
 
+# local temporary
+tmp/
+
 # local database
 distra.db
 distra.db-shm

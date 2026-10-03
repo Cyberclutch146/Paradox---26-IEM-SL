@@ -18,12 +18,19 @@ const ALL_REGION_ID = "kerala";
 
 function filterByRegion<T extends { regionId: string }>(items: T[], regionId?: string): T[] {
   if (!regionId || regionId === ALL_REGION_ID) return items;
-  return items.filter((item) => item.regionId === regionId);
+  const filtered = items.filter((item) => item.regionId === regionId);
+  if (filtered.length > 0) return filtered;
+  return items.slice(0, 5).map((item) => ({ ...item, regionId }));
 }
 
 function filterZonesByRegion(regionId?: string) {
   if (!regionId || regionId === ALL_REGION_ID) return mockRiskZones.features;
-  return mockRiskZones.features.filter((zone) => zone.properties.regionId === regionId);
+  const filtered = mockRiskZones.features.filter((zone) => zone.properties.regionId === regionId);
+  if (filtered.length > 0) return filtered;
+  return mockRiskZones.features.map((zone) => ({
+    ...zone,
+    properties: { ...zone.properties, regionId },
+  }));
 }
 
 export function getMockRegions(): Region[] {
@@ -41,8 +48,30 @@ export function getMockRiskZones(regionId?: string): RiskZoneCollection {
   };
 }
 
-export function getMockInsights(): InsightData[] {
-  return mockInsights;
+export function getMockInsights(regionId?: string): InsightData[] {
+  if (!regionId || regionId === ALL_REGION_ID) return mockInsights;
+
+  // Simple deterministic hash based on regionId
+  const seed = regionId.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  
+  return mockInsights.map((insight, index) => {
+    const randomFactor = ((seed + index * 17) % 100) / 100;
+    const variance = (randomFactor - 0.5) * 0.5; // -25% to +25%
+    const baseValue = parseFloat(insight.value);
+    
+    const newValue = Math.max(0, baseValue * (1 + variance));
+    const isUp = randomFactor > 0.5;
+    const newSparkline = insight.sparklineData.map(v => Math.max(0, v * (1 + variance)));
+
+    return {
+      ...insight,
+      value: insight.unit === "zones" ? Math.round(newValue).toString() : newValue.toFixed(1),
+      trend: isUp ? "up" : "down",
+      trendValue: (isUp ? "+" : "-") + (baseValue * Math.abs(variance)).toFixed(1) + (insight.unit === "zones" ? " zones" : insight.unit),
+      sparklineData: newSparkline,
+      status: newValue > (insight.threshold || baseValue * 1.1) ? "danger" : newValue > (insight.threshold ? insight.threshold * 0.85 : baseValue * 0.9) ? "warning" : "normal",
+    };
+  });
 }
 
 export function getMockCommunity(): CommunityMessage[] {
@@ -51,8 +80,25 @@ export function getMockCommunity(): CommunityMessage[] {
 
 export function getMockRiskSummary(regionId?: string): RiskSummary | null {
   const region = regionId ? findRegion(regionId) : null;
-  if (!region) return null;
-  return computeRiskSummary(region, getMockRiskZones(regionId).features, mockInsights);
+  const zones = getMockRiskZones(regionId).features;
+  if (!region) {
+    return {
+      regionId: regionId || "unknown",
+      regionName: "Global Location",
+      score: 65.4,
+      level: "warning",
+      trend: "stable",
+      trendDelta: "Normal",
+      confidence: 70,
+      updatedAt: new Date(),
+      factors: [
+        { label: "Rainfall", value: "45 mm/24h", level: "watch" },
+        { label: "Soil Moisture", value: "60%", level: "warning" },
+        { label: "Slope Stability", value: "0.8 idx", level: "low" },
+      ],
+    };
+  }
+  return computeRiskSummary(region, zones, getMockInsights(regionId));
 }
 
 export function getMockZoneReports(regionId?: string): ZoneReport[] {

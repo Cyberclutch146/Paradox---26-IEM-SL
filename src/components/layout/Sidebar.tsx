@@ -48,21 +48,21 @@ export default function Sidebar({ variant = "default" }: { variant?: "default" |
 
   return (
     <nav className={cn(
-      "fixed md:sticky bottom-0 md:top-0 z-[9999] flex md:flex-col items-center justify-between md:h-screen w-full md:w-[76px] transition-colors duration-300 shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)] md:shadow-[4px_0_20px_-10px_rgba(0,0,0,0.1)]",
+      "fixed md:sticky bottom-0 md:top-0 z-[9999] flex md:flex-col items-center justify-between md:h-screen w-full md:w-[76px] transition-colors duration-300",
       isTransparent
         ? "bg-transparent border-transparent"
-        : "bg-bg-primary/95 backdrop-blur-xl md:border-r border-t md:border-t-0 border-border-subtle"
+        : "bg-[#0a0a0a]/95 backdrop-blur-2xl md:border-r border-t md:border-t-0 border-white/[0.06] shadow-[0_-4px_30px_-10px_rgba(0,0,0,0.5)] md:shadow-[4px_0_30px_-10px_rgba(0,0,0,0.4)]"
     )}>
       {/* Top / Left Section */}
       <div className="flex md:flex-col items-center gap-2 md:gap-6 p-2 md:p-5 h-full md:h-auto w-full md:w-auto overflow-x-auto md:overflow-visible no-scrollbar">
         {/* Logo */}
-        <Link href="/" className="hidden md:flex items-center justify-center h-10 w-10 shrink-0 group rounded-xl hover:bg-bg-surface-hover transition-colors mb-2">
+        <Link href="/" className="hidden md:flex items-center justify-center h-10 w-10 shrink-0 group rounded-xl hover:bg-white/[0.06] transition-all duration-200 mb-2">
           <div className="relative h-8 w-8">
-            <div className="absolute inset-0 rounded-full bg-accent-subtle group-hover:bg-accent-muted transition-colors" />
+            <div className="absolute inset-0 rounded-full bg-[#ff7a00]/10 group-hover:bg-[#ff7a00]/20 transition-colors" />
             <svg aria-hidden="true" viewBox="0 0 32 32" className="relative h-8 w-8" fill="none">
-              <path d="M4 20c4-2.5 6-7 8-11 1.5 3.4 4 5.6 8 7.6" stroke="var(--text-primary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M24 24c-3-1.6-5.4-3.6-7-6.4" stroke="var(--text-primary)" strokeWidth="2.5" strokeLinecap="round" />
-              <circle cx="13" cy="11" r="2.5" fill="var(--accent)" />
+              <path d="M4 20c4-2.5 6-7 8-11 1.5 3.4 4 5.6 8 7.6" stroke="#f0f0f0" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M24 24c-3-1.6-5.4-3.6-7-6.4" stroke="#f0f0f0" strokeWidth="2.5" strokeLinecap="round" />
+              <circle cx="13" cy="11" r="2.5" fill="#ff7a00" className="animate-pulse" />
             </svg>
           </div>
         </Link>
@@ -79,21 +79,21 @@ export default function Sidebar({ variant = "default" }: { variant?: "default" |
                 aria-label={item.label}
               >
                 <div className={cn(
-                  "p-2.5 rounded-[14px] transition-colors flex items-center justify-center",
+                  "p-2.5 rounded-[14px] transition-all duration-200 flex items-center justify-center",
                   isActive
-                    ? "bg-accent text-text-on-accent shadow-sm scale-110"
-                    : "text-text-secondary group-hover:bg-bg-surface-hover group-hover:text-text-primary"
+                    ? "bg-[#ff7a00] text-white shadow-[0_0_12px_rgba(255,122,0,0.3)] scale-110"
+                    : "text-[#5a5a66] group-hover:bg-white/[0.06] group-hover:text-white"
                 )}>
                   {item.icon}
                 </div>
                 {/* Tooltip for desktop */}
-                <span className="absolute left-[calc(100%+8px)] px-2.5 py-1.5 rounded-md bg-text-primary text-bg-primary text-[11px] font-medium tracking-wide whitespace-nowrap opacity-0 md:group-hover:opacity-100 pointer-events-none transition-all duration-200 shadow-md z-50 translate-x-1 group-hover:translate-x-0">
+                <span className="absolute left-[calc(100%+8px)] px-3 py-1.5 rounded-lg bg-[#1c1c1c] text-white text-[11px] font-medium tracking-wide whitespace-nowrap opacity-0 md:group-hover:opacity-100 pointer-events-none transition-all duration-200 shadow-pop z-50 translate-x-1 group-hover:translate-x-0 border border-white/[0.08]">
                   {item.label}
                 </span>
                 {/* Text for mobile */}
                 <span className={cn(
                   "text-[10px] mt-1 md:hidden font-medium",
-                  isActive ? "text-accent" : "text-text-secondary"
+                  isActive ? "text-[#ff7a00]" : "text-[#5a5a66]"
                 )}>
                   {item.label}
                 </span>

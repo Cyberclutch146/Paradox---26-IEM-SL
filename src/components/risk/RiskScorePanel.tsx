@@ -36,7 +36,7 @@ function SummaryBody({ summary }: { summary: RiskSummary }) {
          <div className={`text-4xl font-bold font-data ${getRiskColorClass(summary.level)} mb-2`}>
             {summary.score.toFixed(3)}
          </div>
-         <div className="eyebrow eyebrow-xs">ML Ranking Score</div>
+         <div className="eyebrow eyebrow-xs">Risk Index Score</div>
       </div>
 
       <div className="grid grid-cols-2 gap-2.5 mb-4">
@@ -52,12 +52,12 @@ function SummaryBody({ summary }: { summary: RiskSummary }) {
         <div className="card-tint p-3">
           <div className="eyebrow eyebrow-xs mb-1.5">Confidence</div>
           <div className="flex items-center gap-2">
-            <span className="font-data text-sm font-semibold text-text-primary">
+            <span className="font-data text-sm font-semibold text-white">
               {summary.confidence > 80 ? "High" : "Low"}
             </span>
-            <div className="flex-1 h-1.5 rounded-full bg-border-subtle overflow-hidden">
+            <div className="flex-1 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
               <div
-                className="h-full rounded-full bg-accent transition-all duration-1000"
+                className="h-full rounded-full bg-[#ff7a00] transition-all duration-1000"
                 style={{ width: `${summary.confidence}%` }}
               />
             </div>
@@ -65,7 +65,7 @@ function SummaryBody({ summary }: { summary: RiskSummary }) {
         </div>
       </div>
 
-      <div className="border-t border-border-subtle">
+      <div className="border-t border-white/[0.06]">
         <div className="eyebrow eyebrow-xs mb-2 mt-3">Key risk factors</div>
         <div className="divide-y divide-border-subtle">
           {summary.factors.map((factor) => (
@@ -85,7 +85,7 @@ function SummaryBody({ summary }: { summary: RiskSummary }) {
         </div>
       </div>
 
-      <div className="mt-auto pt-3 border-t border-border-subtle">
+      <div className="mt-auto pt-3 border-t border-white/[0.06]">
         <div className="font-data text-[10px] text-text-tertiary">
           Updated {new Date(summary.updatedAt).toLocaleTimeString("en-US", { hour12: false })} ·
           Agent 1 (Risk-Scoring)

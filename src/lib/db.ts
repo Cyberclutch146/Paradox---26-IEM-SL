@@ -17,11 +17,12 @@ try {
   // Dynamic require so the app doesn't crash when the native
   // module isn't compiled (e.g. missing Visual Studio Build Tools).
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const Database = require("better-sqlite3") as typeof import("better-sqlite3").default;
+  const Database = require("better-sqlite3") as typeof import("better-sqlite3");
   const dbPath = path.resolve(process.cwd(), "distra.db");
-  db = new Database(dbPath);
-  db.pragma("journal_mode = WAL");
-  db.pragma("foreign_keys = ON");
+  const database = new Database(dbPath);
+  database.pragma("journal_mode = WAL");
+  database.pragma("foreign_keys = ON");
+  db = database;
 } catch {
   // Native module not available — running in mock-data mode.
 }

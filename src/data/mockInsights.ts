@@ -45,6 +45,15 @@ export const mockInsights: InsightData[] = [
     trendValue: "+1 zone",
     sparklineData: [0, 0, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3],
     status: "warning",
-
+  },
+  {
+    id: "ml-confidence",
+    title: "ML Anomaly Confidence",
+    value: "94.2",
+    unit: "%",
+    trend: "up",
+    trendValue: "+2.1%",
+    sparklineData: [88, 89, 88, 90, 91, 91, 93, 92, 94.2],
+    status: "danger",
   },
 ];
