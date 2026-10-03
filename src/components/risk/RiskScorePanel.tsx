@@ -116,7 +116,7 @@ export default function RiskScorePanel() {
     <div className="card-static p-5 animate-fade-in h-full flex flex-col">
       {error ? (
         <p className="text-sm text-risk-danger">Failed to load risk assessment.</p>
-      ) : loading || !data ? (
+      ) : loading ? (
         <div className="animate-pulse space-y-4">
           <div className="flex items-center justify-between">
             <div className="h-4 w-32 rounded bg-bg-surface-hover" />

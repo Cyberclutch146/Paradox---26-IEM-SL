@@ -16,6 +16,7 @@ export interface ChatMessage {
   displayName: string;
   photoURL: string | null;
   text: string;
+  regionId: string;
   createdAt: Date;
 }
 
@@ -25,6 +26,7 @@ export interface ChatDoc {
   displayName: string;
   photoURL: string | null;
   text: string;
+  regionId: string;
   createdAt: Timestamp | null;
 }
 
@@ -58,6 +60,7 @@ export function toChatMessages(docs: ChatDocLike[]): ChatMessage[] {
         displayName: data.displayName,
         photoURL: data.photoURL,
         text: data.text,
+        regionId: data.regionId,
         createdAt: data.createdAt?.toDate() ?? new Date(),
       };
     })

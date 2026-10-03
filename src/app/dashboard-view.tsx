@@ -6,9 +6,9 @@ import Footer from "@/components/layout/Footer";
 import Sidebar from "@/components/layout/Sidebar";
 import LocationSelector from "@/components/layout/LocationSelector";
 import RiskScorePanel from "@/components/risk/RiskScorePanel";
+import MLPredictionPanel from "@/components/risk/MLPredictionPanel";
 import AlertsFeed from "@/components/alerts/AlertsFeed";
 import InsightCards from "@/components/insights/InsightCards";
-import CommunityPreview from "@/components/community/CommunityPreview";
 import AssistantBot from "@/components/chatbot/AssistantBot";
 import { useRegion } from "@/state/region-context";
 import { getAlerts, getRiskZones, getRiskSummary } from "@/lib/data-client";
@@ -251,11 +251,11 @@ export default function DashboardView() {
               </div>
 
               <InsightCards />
+              <MLPredictionPanel />
             </div>
 
-            <aside className="lg:col-span-5 xl:col-span-4 space-y-6" aria-label="Alerts and community">
+            <aside className="lg:col-span-5 xl:col-span-4 space-y-6" aria-label="Alerts">
               <AlertsFeed />
-              <CommunityPreview />
             </aside>
           </div>
         </section>
