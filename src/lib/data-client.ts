@@ -2,6 +2,8 @@ import type {
   Alert,
   CommunityMessage,
   InsightData,
+  OrchestratorRequest,
+  OrchestratorResponse,
   Region,
   RiskZoneCollection,
   RiskSummary,
@@ -26,6 +28,20 @@ export function getDataProvider(): DataProvider {
 
 async function apiGet<T>(path: string): Promise<T> {
   const response = await fetch(path);
+  if (!response.ok) {
+    throw new Error(`Request to ${path} failed with status ${response.status}`);
+  }
+  return (await response.json()) as T;
+}
+
+async function apiPost<T>(path: string, body: unknown): Promise<T> {
+  const response = await fetch(path, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
   if (!response.ok) {
     throw new Error(`Request to ${path} failed with status ${response.status}`);
   }
@@ -77,4 +93,23 @@ export function getZoneReports(regionId?: string): Promise<ZoneReport[]> {
     return apiGet<ZoneReport[]>(`/api/reports${query}`);
   }
   return Promise.resolve(getMockZoneReports(regionId));
+}
+
+export function getOrchestratorPrediction(
+  params: OrchestratorRequest
+): Promise<OrchestratorResponse> {
+  if (getDataProvider() === "api") {
+    return apiPost<OrchestratorResponse>("/api/predict", params);
+  }
+  return Promise.resolve({
+    success: true,
+    isFallback: false,
+    result: {
+      risk_level: "moderate",
+      risk_score: 0.45,
+      rationale:
+        "Mock prediction: Moderate regional risk score derived from default baseline indicators.",
+    },
+    timestamp: new Date().toISOString(),
+  });
 }
